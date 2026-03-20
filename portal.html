@@ -57,7 +57,7 @@
     }
 
     .sidebar-top {
-      height: 72px;
+      height: 50px;
       background: linear-gradient(90deg, var(--header-blue) 0%, var(--header-blue-dark) 100%);
       color: #fff;
       display: flex;
@@ -65,7 +65,7 @@
       padding: 0 18px;
       border-bottom: 1px solid rgba(255,255,255,0.18);
       box-shadow: inset 0 -1px 0 rgba(255,255,255,0.15);
-      font-size: 16px;
+      font-size: 21px;
       font-weight: 700;
       letter-spacing: 0.03em;
     }
@@ -193,7 +193,7 @@
     }
 
     .topbar {
-      height: 72px;
+      height: 50px;
       background: linear-gradient(90deg, var(--header-blue) 0%, var(--header-blue-dark) 100%);
       color: #fff;
       display: flex;
@@ -221,13 +221,13 @@
     }
 
     .hamburger {
-      font-size: 22px;
+      font-size: 30px;
       line-height: 1;
       font-weight: 700;
     }
 
     .topbar-title {
-      font-size: 18px;
+      font-size: 21px;
       font-weight: 700;
       letter-spacing: 0.02em;
     }
@@ -252,7 +252,7 @@
 
     .news-panel {
       display: grid;
-      grid-template-columns: 2fr 1fr;
+      grid-template-columns: 4fr 1fr;
       gap: 18px;
       align-items: start;
     }
@@ -312,7 +312,7 @@
     }
 
     .side-box {
-      min-height: 60px;
+      min-height: auto;
       display: grid;
       place-items: center;
       background: #e8e2d7;
@@ -322,13 +322,17 @@
       font-weight: 700;
       text-align: center;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);
-      padding: 8px 10px;
+      padding: 10px 12px;
       border-radius: 12px;
     }
 
     /* ===== カード ===== */
     .portal {
-      padding: 60px 0 0;
+      padding: 24px 0 0;
+    }
+
+    .portal .section-title {
+      margin: 0 0 18px;
     }
 
     .cards {
@@ -492,7 +496,7 @@
   <div class="app">
     <aside id="sidebar" class="sidebar">
       <div class="sidebar-shell">
-        <div class="sidebar-top">サイドバー</div>
+        <div class="sidebar-top">A beef...</div>
 
         <div class="sidebar-inner">
           <label class="sidebar-search-label" for="portalSearch">検索</label>
@@ -544,6 +548,7 @@
         </section>
 
         <section class="portal">
+          <h2 class="section-title">マニュアル</h2>
           <div class="cards" id="cardGrid"></div>
         </section>
       </div>
