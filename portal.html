@@ -343,15 +343,21 @@
     }
 
     .card {
-      position: relative;
-      min-height: 150px;
-      padding: 28px 24px 50px;
-      color: #fff;
-      overflow: hidden;
-      clip-path: polygon(0 0, 100% 0, 100% 78%, 92% 100%, 0 100%);
-      box-shadow: var(--card-shadow);
-      border-radius: 12px;
-    }
+  position: relative;
+  display: block;
+  text-decoration: none;
+  min-height: 150px;
+  padding: 28px 24px 50px;
+  color: #fff;
+  overflow: hidden;
+  clip-path: polygon(0 0, 100% 0, 100% 78%, 92% 100%, 0 100%);
+  box-shadow: var(--card-shadow);
+  border-radius: 12px;
+}
+    .card:hover {
+  transform: translateY(-2px);
+  transition: 0.2s ease;
+}
 
     .card::before {
       content: "";
@@ -663,21 +669,22 @@
     const menuToggle = document.getElementById("menuToggle");
     const sidebar = document.getElementById("sidebar");
 
-    cards.forEach((card) => {
-      const article = document.createElement("article");
-      article.className = `card ${card.color}`;
-      article.innerHTML = `
-        <div class="card-content">
-          <div class="card-icon">${card.icon}</div>
-          <div class="card-text">
-            <h3>${card.title}</h3>
-            <p>${card.text}</p>
-          </div>
-        </div>
-        <a class="card-link" href="${card.href}">詳細はこちら ＞</a>
-      `;
-      cardGrid.appendChild(article);
-    });
+   cards.forEach((card) => {
+  const linkCard = document.createElement("a");
+  linkCard.className = `card ${card.color}`;
+  linkCard.href = card.href;
+  linkCard.innerHTML = `
+    <div class="card-content">
+      <div class="card-icon">${card.icon}</div>
+      <div class="card-text">
+        <h3>${card.title}</h3>
+        <p>${card.text}</p>
+      </div>
+    </div>
+    <div class="card-link">詳細はこちら ＞</div>
+  `;
+  cardGrid.appendChild(linkCard);
+});
 
     newsData.forEach((item) => {
       const div = document.createElement("div");
