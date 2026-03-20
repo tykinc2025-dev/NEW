@@ -510,6 +510,13 @@
         min-height: 200px;
       }
     }
+    .side-box.active {
+  background: linear-gradient(180deg, #35a5db 0%, #2f9ed3 100%);
+  color: #fff;
+  box-shadow:
+    0 6px 14px rgba(31, 54, 74, 0.25),
+    inset 0 1px 0 rgba(255,255,255,0.3);
+}
   </style>
 </head>
 <body>
@@ -762,6 +769,34 @@
     });
 
     renderSearchResults("");
+    const sideBoxes = document.querySelectorAll(".side-box");
+
+// 初期選択（1個目を選択状態にする）
+sideBoxes[0].classList.add("active");
+
+sideBoxes.forEach((box) => {
+  box.addEventListener("click", () => {
+    sideBoxes.forEach((b) => b.classList.remove("active"));
+    box.classList.add("active");
+
+    if (box.textContent.includes("総合カレンダー")) {
+      // カレンダー表示
+    } else if (box.textContent.includes("E-LEARNING")) {
+      // Eラーニング表示
+    } else if (box.textContent.includes("年間スケジュール")) {
+      // 年間スケジュール表示
+    } else if (box.textContent.includes("ダウンロード書類")) {
+      // ダウンロード書類表示
+    } else if (box.textContent.includes("保護者向け案内")) {
+      // 保護者向け案内表示
+    }
+
+    console.log(box.textContent + " が選択されました");
+  });
+});
+
+// 初期選択（1個目を選択状態にする）
+sideBoxes[0].classList.add("active");
   </script>
 </body>
 </html>
