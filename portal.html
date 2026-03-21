@@ -125,6 +125,21 @@
       margin-bottom: 16px;
     }
 
+.sidebar-link-group {
+  margin-bottom: 14px; /* ← カテゴリ同士の間 */
+}
+
+.sidebar-link-category {
+  margin: 16px 0 8px; /* ← 上を広く、下は少しだけ */
+  font-size: 12px;
+  color: #70808d;
+  font-weight: 700;
+}
+
+.sidebar-links {
+  display: grid;
+  gap: 10px; /* ← リンク同士の間 */
+}
     .search-result-list {
       display: grid;
       gap: 8px;
@@ -671,14 +686,8 @@
             　
           </div>
 
-          <h3 class="sidebar-links-title">リンク一覧</h3>
-          <div class="sidebar-links" id="sidebarLinks">
-            <a href="#" class="sidebar-link">あとで追加するリンク 1</a>
-            <a href="#" class="sidebar-link">あとで追加するリンク 2</a>
-            <a href="#" class="sidebar-link">あとで追加するリンク 3</a>
-            <a href="#" class="sidebar-link">あとで追加するリンク 4</a>
-            <a href="#" class="sidebar-link">あとで追加するリンク 5</a>
-          </div>
+       
+          <div id="sidebarLinksArea"></div>
         </div>
       </div>
     </aside>
@@ -1024,6 +1033,79 @@ sideBoxes.forEach((box) => {
 
 // 初期選択（1個目を選択状態にする）
 sideBoxes[0].classList.add("active");
+
+const SHEET_ID = "1tYleauEKKiM40N6vjUbGomUnZd4c3LuQ_MbASMWIfFw";
+const SEARCH_SHEET_GID = "475216216";
+
+const sidebarLinksArea = document.getElementById("sidebarLinksArea");
+
+// スプレッドシート読み込み
+async function loadSidebarLinksFromSheet() {
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${SEARCH_SHEET_GID}&tqx=out:json`;
+
+    const res = await fetch(url);
+    const text = await res.text();
+
+    // 変な包みを外す（これ必須）
+    const jsonText = text.substring(47).slice(0, -2);
+    const data = JSON.parse(jsonText);
+
+    const rows = data.table.rows;
+
+    renderSidebarLinks(rows);
+
+  } catch (e) {
+    console.error(e);
+    sidebarLinksArea.innerHTML = "読み込み失敗";
+  }
+}
+
+    function renderSidebarLinks(rows) {
+  sidebarLinksArea.innerHTML = `<h3 class="sidebar-links-title">リンク一覧</h3>`;
+
+  let groupDiv = null;
+
+  rows.slice(1).forEach(row => {
+    const category = row.c[0]?.v || "";
+    const name = row.c[1]?.v || "";
+    const url = row.c[2]?.v || "";
+
+    // カテゴリ行
+    if (category) {
+      groupDiv = document.createElement("div");
+      groupDiv.className = "sidebar-link-group"; // ←これ追加
+
+      const title = document.createElement("h3");
+      title.className = "sidebar-link-category"; // ←これ変更
+      title.textContent = category;
+
+      const links = document.createElement("div");
+      links.className = "sidebar-links";
+
+      groupDiv.appendChild(title);
+      groupDiv.appendChild(links);
+
+      sidebarLinksArea.appendChild(groupDiv);
+    }
+
+    // リンク行
+    if (name && url && groupDiv) {
+      const link = document.createElement("a");
+      link.className = "sidebar-link";
+      link.href = url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = name;
+
+      groupDiv.querySelector(".sidebar-links").appendChild(link);
+    }
+  });
+}
+
+// 実行
+loadSidebarLinksFromSheet();
+    
   </script>
    
 </body>
