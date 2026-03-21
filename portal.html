@@ -559,6 +559,99 @@
     0 6px 14px rgba(31, 54, 74, 0.25),
     inset 0 1px 0 rgba(255,255,255,0.3);
 }
+        /* ===== パスワードモーダル ===== */
+    .password-modal.hidden {
+      display: none;
+    }
+
+    .password-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+    }
+
+    .password-modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+    }
+
+    .password-modal-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(92%, 420px);
+      background: #fff;
+      border-radius: 16px;
+      padding: 22px 20px 18px;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.22);
+      border: 1px solid #d8e0e8;
+    }
+
+    .password-modal-content h3 {
+      margin: 0 0 10px;
+      font-size: 20px;
+      color: #2d3a45;
+    }
+
+    .password-modal-text {
+      margin: 0 0 14px;
+      font-size: 14px;
+      color: #5b6b78;
+      line-height: 1.6;
+    }
+
+    .password-input {
+      width: 100%;
+      height: 44px;
+      padding: 0 12px;
+      border: 1px solid #cfd8df;
+      border-radius: 10px;
+      font-size: 14px;
+      outline: none;
+      background: #fff;
+    }
+
+    .password-input:focus {
+      border-color: #35a5db;
+      box-shadow: 0 0 0 3px rgba(53, 165, 219, 0.15);
+    }
+
+    .password-error {
+      min-height: 20px;
+      margin: 10px 0 0;
+      font-size: 13px;
+      color: #d3302f;
+      font-weight: 700;
+    }
+
+    .password-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .password-btn {
+      min-width: 90px;
+      height: 40px;
+      border: none;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .password-btn.cancel {
+      background: #e8edf2;
+      color: #44515d;
+    }
+
+    .password-btn.submit {
+      background: linear-gradient(180deg, #35a5db 0%, #2f9ed3 100%);
+      color: #fff;
+    }
   </style>
 </head>
 <body>
@@ -603,7 +696,7 @@
       <span class="label">会社紹介</span>
     </a>
     <a href="#" class="top-link">
-      <span class="label">コース・料金</span>
+      <span class="label">メール</span>
     </a>
     <a href="#" class="top-link">
       <span class="label">ポータルTOP</span>
@@ -637,7 +730,29 @@
       </div>
     </div>
   </div>
+ <!-- パスワードモーダル -->
+  <div id="passwordModal" class="password-modal hidden">
+    <div class="password-modal-backdrop"></div>
+    <div class="password-modal-content" role="dialog" aria-modal="true" aria-labelledby="passwordModalTitle">
+      <h3 id="passwordModalTitle">パスワード入力</h3>
+      <p id="passwordTargetLabel" class="password-modal-text">リンクを開くにはパスワードが必要です。</p>
 
+      <input
+        id="passwordInput"
+        type="password"
+        class="password-input"
+        placeholder="パスワードを入力してください"
+      />
+
+      <p id="passwordError" class="password-error"></p>
+
+      <div class="password-actions">
+        <button id="passwordCancel" type="button" class="password-btn cancel">キャンセル</button>
+        <button id="passwordSubmit" type="button" class="password-btn submit">開く</button>
+      </div>
+    </div>
+  </div>
+  
   <script>
     const cards = [
       {
@@ -645,42 +760,47 @@
         text: "顧客とのメール対応、問い合わせ管理、連絡履歴の確認はこちらから。",
         icon: "📞",
         href: "#",
-        color: "c-teal"
-      },
+        color: "c-teal",
+        requiresPassword: false      },
       {
         title: "経理関連",
         text: "経費精算、請求書管理、支払い処理など経理業務はこちら。",
         icon: "💰",
         href: "#",
-        color: "c-coral"
+        color: "c-coral",
+        requiresPassword: true
       },
       {
         title: "社内業務関連",
         text: "社内申請、勤怠、備品管理など日常業務の入口です。",
         icon: "🏢",
         href: "#",
-        color: "c-yellow"
+        color: "c-yellow",
+        requiresPassword: false
       },
       {
-        title: "お客様提供物関連",
+        title: "提供サービス関連",
         text: "納品資料、提出物、成果物の管理・確認はこちら。",
         icon: "📦",
         href: "#",
-        color: "c-blue"
+        color: "c-blue",
+        requiresPassword: false
       },
       {
         title: "マーケ関連",
         text: "広告運用、分析データ、マーケ施策の管理はこちら。",
         icon: "📊",
         href: "#",
-        color: "c-purple"
+        color: "c-purple",
+        requiresPassword: false
       },
       {
-        title: "FAQ",
-        text: "社内ルールやよくある質問をまとめています。",
+        title: "システム管理者用",
+        text: "システム管理",
         icon: "❓",
         href: "#",
-        color: "c-green"
+        color: "c-green",
+        requiresPassword: true
       }
     ];
 
@@ -745,10 +865,52 @@
     const menuToggle = document.getElementById("menuToggle");
     const sidebar = document.getElementById("sidebar");
 
-   cards.forEach((card) => {
+const MASTER_PASSWORD = "1233";
+
+const passwordModal = document.getElementById("passwordModal");
+const passwordInput = document.getElementById("passwordInput");
+const passwordSubmit = document.getElementById("passwordSubmit");
+const passwordCancel = document.getElementById("passwordCancel");
+const passwordError = document.getElementById("passwordError");
+const passwordTargetLabel = document.getElementById("passwordTargetLabel");
+
+let pendingUrl = null;
+
+// モーダルを開く
+function openPasswordModal(title, url) {
+  pendingUrl = url;
+  passwordTargetLabel.textContent = `「${title}」を開くにはパスワードが必要です。`;
+  passwordInput.value = "";
+  passwordError.textContent = "";
+  passwordModal.classList.remove("hidden");
+  passwordInput.focus();
+}
+
+// モーダルを閉じる
+function closePasswordModal() {
+  passwordModal.classList.add("hidden");
+  pendingUrl = null;
+}
+
+// 判定
+function submitPassword() {
+  if (passwordInput.value === MASTER_PASSWORD) {
+    window.location.href = pendingUrl;
+  } else {
+    passwordError.textContent = "パスワードが違います";
+    passwordInput.value = "";
+  }
+}
+
+passwordSubmit.addEventListener("click", submitPassword);
+passwordCancel.addEventListener("click", closePasswordModal);
+
+// カード生成（←ここが重要！）
+cards.forEach((card) => {
   const linkCard = document.createElement("a");
   linkCard.className = `card ${card.color}`;
   linkCard.href = card.href;
+
   linkCard.innerHTML = `
     <div class="card-content">
       <div class="card-icon">${card.icon}</div>
@@ -758,6 +920,15 @@
       </div>
     </div>
   `;
+
+  // ★ここが追加ポイント！
+  if (card.requiresPassword) {
+    linkCard.addEventListener("click", (e) => {
+      e.preventDefault(); // 普通のリンクを止める
+      openPasswordModal(card.title, card.href);
+    });
+  }
+
   cardGrid.appendChild(linkCard);
 });
 
@@ -854,6 +1025,7 @@ sideBoxes.forEach((box) => {
 // 初期選択（1個目を選択状態にする）
 sideBoxes[0].classList.add("active");
   </script>
+   
 </body>
 </html>
 
