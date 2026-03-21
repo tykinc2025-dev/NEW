@@ -979,17 +979,27 @@ function renderSearchResults(keyword = "") {
     return;
   }
 
-  // 下のリンク一覧を検索
-  const matchedLinks = searchLinks.filter((item) => {
-    const text = [
-      item.category,
-      item.title,
-      item.description,
-      ...(item.keywords || [])
-    ].join(" ").toLowerCase();
+  // 固定リンクを検索
+const matchedStaticLinks = searchLinks.filter((item) => {
+  const text = [
+    item.category,
+    item.title,
+    item.description,
+    ...(item.keywords || [])
+  ].join(" ").toLowerCase();
 
-    return text.includes(q);
-  });
+  return text.includes(q);
+});
+
+// スプレッドシートのリンク一覧を検索
+const matchedSidebarLinks = sidebarSheetLinksData.filter((item) => {
+  const text = [
+    item.category,
+    item.title
+  ].join(" ").toLowerCase();
+
+  return text.includes(q);
+});
 
   // スプレッドシートの本文全文を検索
   const matchedManuals = portalManualSearchData.filter((item) => {
@@ -1001,7 +1011,7 @@ function renderSearchResults(keyword = "") {
     return text.includes(q);
   });
 
-  if (!matchedLinks.length && !matchedManuals.length) {
+  if (!matchedStaticLinks.length && !matchedSidebarLinks.length && !matchedManuals.length) {
     searchResults.textContent = `「${keyword}」に該当する結果は見つかりませんでした。`;
     return;
   }
@@ -1026,22 +1036,31 @@ function renderSearchResults(keyword = "") {
     }).join("");
   }
 
-  if (matchedLinks.length) {
-    html += `
-      <div class="search-result-item" style="background:#eef4fb;">
-        <strong style="font-size:12px; color:#34506a;">リンク一覧</strong>
-      </div>
-    `;
+  if (matchedStaticLinks.length || matchedSidebarLinks.length) {
+  html += `
+    <div class="search-result-item" style="background:#eef4fb;">
+      <strong style="font-size:12px; color:#34506a;">リンク一覧</strong>
+    </div>
+  `;
 
-    html += matchedLinks.map((item) => `
-      <div class="search-result-item">
-        <a href="${item.url}" target="_blank" rel="noopener noreferrer">
-          ${escapeHtml(item.title)}
-        </a>
-        <p>${escapeHtml(item.category)}｜${escapeHtml(item.description)}</p>
-      </div>
-    `).join("");
-  }
+  html += matchedSidebarLinks.map((item) => `
+    <div class="search-result-item">
+      <a href="${item.url}" target="_blank" rel="noopener noreferrer">
+        ${escapeHtml(item.title)}
+      </a>
+      <p>${escapeHtml(item.category)}</p>
+    </div>
+  `).join("");
+
+  html += matchedStaticLinks.map((item) => `
+    <div class="search-result-item">
+      <a href="${item.url}" target="_blank" rel="noopener noreferrer">
+        ${escapeHtml(item.title)}
+      </a>
+      <p>${escapeHtml(item.category)}｜${escapeHtml(item.description)}</p>
+    </div>
+  `).join("");
+}
 
   html += `</div>`;
   searchResults.innerHTML = html;
@@ -1088,6 +1107,7 @@ sideBoxes.forEach((box) => {
 
     const PORTAL_SEARCH_GID = "1524937171";
 let portalManualSearchData = [];
+let sidebarSheetLinksData = [];
     
 // 初期選択（1個目を選択状態にする）
 sideBoxes[0].classList.add("active");
@@ -1110,7 +1130,24 @@ async function loadSidebarLinksFromSheet() {
     const data = JSON.parse(jsonText);
 
     const rows = data.table.rows;
+let currentCategory = "";
+sidebarSheetLinksData = [];
 
+rows.slice(1).forEach(row => {
+  const category = row.c[0]?.v || "";
+  const name = row.c[1]?.v || "";
+  const url = row.c[2]?.v || "";
+
+  if (category) currentCategory = category;
+
+  if (name && url) {
+    sidebarSheetLinksData.push({
+      category: currentCategory,
+      title: name,
+      url: url
+    });
+  }
+});
     renderSidebarLinks(rows);
 
   } catch (e) {
