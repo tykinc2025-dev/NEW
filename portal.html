@@ -1037,11 +1037,6 @@ const matchedSidebarLinks = sidebarSheetLinksData.filter((item) => {
   }
 
   if (matchedStaticLinks.length || matchedSidebarLinks.length) {
-  html += `
-    <div class="search-result-item" style="background:#eef4fb;">
-      <strong style="font-size:12px; color:#34506a;">リンク一覧</strong>
-    </div>
-  `;
 
   html += matchedSidebarLinks.map((item) => `
     <div class="search-result-item">
