@@ -959,41 +959,97 @@ cards.forEach((card) => {
       newsList.appendChild(div);
     });
 
-    function renderSearchResults(keyword = "") {
-      const q = keyword.trim().toLowerCase();
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, function (m) {
+    return {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    }[m];
+  });
+}
 
-      if (!q) {
-        searchResults.textContent = "　";
-        return;
-      }
+function renderSearchResults(keyword = "") {
+  const q = keyword.trim().toLowerCase();
 
-      const matched = searchLinks.filter((item) => {
-        const text = [
-          item.category,
-          item.title,
-          item.description,
-          ...(item.keywords || [])
-        ].join(" ").toLowerCase();
+  if (!q) {
+    searchResults.textContent = "　";
+    return;
+  }
 
-        return text.includes(q);
-      });
+  // 下のリンク一覧を検索
+  const matchedLinks = searchLinks.filter((item) => {
+    const text = [
+      item.category,
+      item.title,
+      item.description,
+      ...(item.keywords || [])
+    ].join(" ").toLowerCase();
 
-      if (!matched.length) {
-        searchResults.textContent = `「${keyword}」に該当するリンクは見つかりませんでした。`;
-        return;
-      }
+    return text.includes(q);
+  });
 
-      searchResults.innerHTML = `
-        <div class="search-result-list">
-          ${matched.map((item) => `
-            <div class="search-result-item">
-              <a href="${item.url}">${item.title}</a>
-              <p>${item.category}｜${item.description}</p>
-            </div>
-          `).join("")}
+  // スプレッドシートの本文全文を検索
+  const matchedManuals = portalManualSearchData.filter((item) => {
+    const text = [
+      item.title,
+      item.bodyText
+    ].join(" ").toLowerCase();
+
+    return text.includes(q);
+  });
+
+  if (!matchedLinks.length && !matchedManuals.length) {
+    searchResults.textContent = `「${keyword}」に該当する結果は見つかりませんでした。`;
+    return;
+  }
+
+  let html = `<div class="search-result-list">`;
+
+  if (matchedManuals.length) {
+    html += `
+      <div class="search-result-item" style="background:#e8f5ee;">
+        <strong style="font-size:12px; color:#2f6b4f;">マニュアル</strong>
+      </div>
+    `;
+
+    html += matchedManuals.map((item) => {
+      const separator = item.url.includes("?") ? "&" : "?";
+      const urlWithQuery = `${item.url}${separator}q=${encodeURIComponent(keyword)}`;
+
+      return `
+        <div class="search-result-item">
+          <a href="${urlWithQuery}" target="_blank" rel="noopener noreferrer">
+            ${escapeHtml(item.title)}
+          </a>
+          <p>本文に「${escapeHtml(keyword)}」が含まれています</p>
         </div>
       `;
-    }
+    }).join("");
+  }
+
+  if (matchedLinks.length) {
+    html += `
+      <div class="search-result-item" style="background:#eef4fb;">
+        <strong style="font-size:12px; color:#34506a;">リンク一覧</strong>
+      </div>
+    `;
+
+    html += matchedLinks.map((item) => `
+      <div class="search-result-item">
+        <a href="${item.url}" target="_blank" rel="noopener noreferrer">
+          ${escapeHtml(item.title)}
+        </a>
+        <p>${escapeHtml(item.category)}｜${escapeHtml(item.description)}</p>
+      </div>
+    `).join("");
+  }
+
+  html += `</div>`;
+  searchResults.innerHTML = html;
+}
 
     portalSearch.addEventListener("input", (e) => {
       renderSearchResults(e.target.value);
@@ -1012,8 +1068,6 @@ cards.forEach((card) => {
     renderSearchResults("");
     const sideBoxes = document.querySelectorAll(".side-box");
 
-// 初期選択（1個目を選択状態にする）
-sideBoxes[0].classList.add("active");
 
 sideBoxes.forEach((box) => {
   box.addEventListener("click", () => {
@@ -1036,6 +1090,9 @@ sideBoxes.forEach((box) => {
   });
 });
 
+    const PORTAL_SEARCH_GID = "1524937171";
+let portalManualSearchData = [];
+    
 // 初期選択（1個目を選択状態にする）
 sideBoxes[0].classList.add("active");
 
@@ -1110,9 +1167,42 @@ async function loadSidebarLinksFromSheet() {
 
 // 実行
 loadSidebarLinksFromSheet();
+loadPortalManualSearchFromSheet();
+
+async function loadPortalManualSearchFromSheet() {
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${PORTAL_SEARCH_GID}&tqx=out:json`;
+
+    const res = await fetch(url);
+    const text = await res.text();
+
+    const jsonText = text.substring(47).slice(0, -2);
+    const data = JSON.parse(jsonText);
+
+    const rows = data.table.rows || [];
+
+portalManualSearchData = rows
+  .slice(1)
+  .map(row => {
+    const title = row.c[0]?.v || "";
+    const url = row.c[1]?.v || "";
+    const bodyText = row.c[2]?.v || "";
+
+    return {
+      title,
+      url,
+      bodyText
+    };
+  })
+  .filter(item => item.title && item.url && item.bodyText);
+
+  } catch (e) {
+    console.error("ポータル内検索用シートの読み込み失敗:", e);
+    portalManualSearchData = [];
+  }
+}
     
   </script>
    
 </body>
 </html>
-
