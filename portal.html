@@ -1009,11 +1009,7 @@ function renderSearchResults(keyword = "") {
   let html = `<div class="search-result-list">`;
 
   if (matchedManuals.length) {
-    html += `
-      <div class="search-result-item" style="background:#e8f5ee;">
-        <strong style="font-size:12px; color:#2f6b4f;">マニュアル</strong>
-      </div>
-    `;
+    
 
     html += matchedManuals.map((item) => {
       const separator = item.url.includes("?") ? "&" : "?";
