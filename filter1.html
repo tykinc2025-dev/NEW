@@ -1,366 +1,1058 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<title>顧客管理UI</title>
-<style>
-body{
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  background:#f5f6f8;
-  margin:0;
-  padding:20px;
-  color:#333;
-}
-
-.container{
-  max-width:1200px;
-  margin:auto;
-}
-
-.header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:20px;
-}
-
-.cards{
-  display:grid;
-  grid-template-columns: repeat(4,1fr);
-  gap:16px;
-  margin-bottom:20px;
-}
-
-.card{
-  background:#fff;
-  padding:16px;
-  border-radius:12px;
-  box-shadow:0 1px 3px rgba(0,0,0,0.08);
-}
-
-.card h2{
-  margin:0;
-  font-size:28px;
-}
-
-.filter{
-  background:#fff;
-  padding:16px;
-  border-radius:12px;
-  margin-bottom:20px;
-}
-
-.filter input, .filter select{
-  padding:10px;
-  border-radius:8px;
-  border:1px solid #ddd;
-  margin-right:10px;
-}
-
-.table{
-  background:#fff;
-  border-radius:12px;
-  overflow:hidden;
-}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-}
-
-th, td{
-  padding:14px;
-  border-bottom:1px solid #eee;
-  text-align:left;
-}
-
-.status{
-  padding:4px 10px;
-  border-radius:20px;
-  font-size:12px;
-}
-
-.orange{background:#fff4e5;color:#d97706;}
-.green{background:#e6f9f0;color:#059669;}
-.blue{background:#e6f0ff;color:#2563eb;}
-</style>
-</head>
-
-<body>
-<div class="container">
-
-<div class="header">
-  <h1>顧客管理</h1>
-  <button id="openSheetBtn">スプレッドシートを開く</button>
-</div>
-
-<div class="cards">
-  <div class="card"><h2 id="totalCount">0</h2>総顧客数</div>
-  <div class="card"><h2 id="progressCount">0</h2>対応中</div>
-  <div class="card"><h2 id="completeCount">0</h2>完了</div>
-  <div class="card"><h2 id="contractCount">0</h2>契約済</div>
-</div>
-
-<div class="filter">
-  <input id="searchInput" placeholder="お客様名・住所で検索">
-  <select id="statusFilter"><option value="">すべてのステータス</option></select>
-  <select id="caseTypeFilter"><option value="">すべての対応案件</option></select>
-  <select id="agencyFilter"><option value="">すべての代理店</option></select>
-</div>
-
-<div class="table">
-<table>
-<thead>
-<tr>
-<th>NO</th>
-<th>お客様名</th>
-<th>物件名</th>
-<th>ステータス</th>
-<th>対応案件</th>
-<th>担当者</th>
-<th>保険会社</th>
-</tr>
-</thead>
-
-<tbody id="customerTableBody">
-<tr>
-<td colspan="7">読み込み中...</td>
-</tr>
-</tbody>
-</table>
-</div>
-
-</div>
-
-<script>
-const SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1z_q03FJikHrKr-KhdQVvOVFU8qkUvm1dI35I4QtUzlo/edit?gid=673017177#gid=673017177';
-const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwbtYEJyjtL66GUTWqc-M7nGkwkkTxpOQw54gG0SE4u5b29hC0rzsZgmb2gas5r-_RH4g/exec';
-
-let allCustomers = [];
-let filteredCustomers = [];
-
-const searchInput = document.getElementById('searchInput');
-const statusFilter = document.getElementById('statusFilter');
-const caseTypeFilter = document.getElementById('caseTypeFilter');
-const agencyFilter = document.getElementById('agencyFilter');
-const tableBody = document.getElementById('customerTableBody');
-
-const totalCount = document.getElementById('totalCount');
-const progressCount = document.getElementById('progressCount');
-const completeCount = document.getElementById('completeCount');
-const contractCount = document.getElementById('contractCount');
-const openSheetBtn = document.getElementById('openSheetBtn');
-
-openSheetBtn.addEventListener('click', () => {
-  window.open(SPREADSHEET_URL, '_blank');
-});
-
-searchInput.addEventListener('input', applyFilters);
-statusFilter.addEventListener('change', applyFilters);
-caseTypeFilter.addEventListener('change', applyFilters);
-agencyFilter.addEventListener('change', applyFilters);
-
-loadCustomerData();
-
-function loadCustomerData() {
-  jsonpFetch(GAS_WEBAPP_URL)
-    .then(res => {
-      if (!res || !res.success) {
-        throw new Error(res && res.message ? res.message : 'データ取得に失敗しました');
-      }
-
-      allCustomers = Array.isArray(res.data) ? res.data : [];
-
-      buildFilterOptions(allCustomers);
-      applyFilters();
-    })
-    .catch(err => {
-      console.error(err);
-      tableBody.innerHTML = `<tr><td colspan="7">${escapeHtml(err.message || 'データの読み込みに失敗しました')}</td></tr>`;
-    });
-}
-
-function jsonpFetch(url) {
-  return new Promise((resolve, reject) => {
-    const callbackName = 'jsonp_callback_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
-    const script = document.createElement('script');
-
-    window[callbackName] = function(data) {
-      resolve(data);
-      cleanup();
-    };
-
-    script.onerror = function() {
-      reject(new Error('JSONP読み込み失敗'));
-      cleanup();
-    };
-
-    function cleanup() {
-      try {
-        delete window[callbackName];
-      } catch (e) {
-        window[callbackName] = undefined;
-      }
-      if (script.parentNode) script.parentNode.removeChild(script);
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>顧客管理UI</title>
+  <style>
+    :root{
+      --bg:#f5f6f8;
+      --card:#ffffff;
+      --text:#333333;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --shadow:0 1px 3px rgba(0,0,0,0.08);
+      --primary:#111827;
+      --orange-bg:#fff4e5;
+      --orange-text:#d97706;
+      --green-bg:#e6f9f0;
+      --green-text:#059669;
+      --blue-bg:#e6f0ff;
+      --blue-text:#2563eb;
+      --purple-bg:#f3e8ff;
+      --purple-text:#7c3aed;
+      --yellow-bg:#fef9c3;
+      --yellow-text:#a16207;
+      --slate-bg:#f1f5f9;
+      --slate-text:#64748b;
+      --red-bg:#fee2e2;
+      --red-text:#dc2626;
     }
 
-    const sep = url.includes('?') ? '&' : '?';
-    script.src = url + sep + 'callback=' + encodeURIComponent(callbackName);
-    document.body.appendChild(script);
-  });
-}
+    *{
+      box-sizing:border-box;
+    }
 
-function buildFilterOptions(data) {
-  const statuses = uniqueSorted(
-    data.map(v => safe(v.status)).filter(v => v !== '')
-  );
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:var(--bg);
+      margin:0;
+      padding:20px;
+      color:var(--text);
+    }
 
-  const caseTypes = uniqueSorted(
-    data.map(v => safe(v.caseType)).filter(v => v !== '')
-  );
+    .container{
+      max-width:1200px;
+      margin:auto;
+    }
 
-  const agencies = uniqueSorted(
-    data.map(v => safe(v.agency)).filter(v => v !== '')
-  );
+    .header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-bottom:20px;
+      flex-wrap:wrap;
+    }
 
-  statusFilter.innerHTML =
-    '<option value="">すべてのステータス</option>' +
-    statuses.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+    .header-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
 
-  caseTypeFilter.innerHTML =
-    '<option value="">すべての対応案件</option>' +
-    caseTypes.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+    h1{
+      margin:0;
+      font-size:28px;
+    }
 
-  agencyFilter.innerHTML =
-    '<option value="">すべての代理店</option>' +
-    agencies.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
-}
+    button,
+    .button-label{
+      border:none;
+      background:#111827;
+      color:#fff;
+      padding:10px 14px;
+      border-radius:10px;
+      cursor:pointer;
+      font-size:14px;
+      box-shadow:var(--shadow);
+      transition:0.2s;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      text-decoration:none;
+    }
 
-function applyFilters() {
-  const keyword = safe(searchInput.value).toLowerCase();
-  const statusValue = safe(statusFilter.value);
-  const caseTypeValue = safe(caseTypeFilter.value);
-  const agencyValue = safe(agencyFilter.value);
+    button:hover,
+    .button-label:hover{
+      opacity:0.92;
+      transform:translateY(-1px);
+    }
 
-  filteredCustomers = allCustomers.filter(item => {
-    const searchTarget = [
-      item.customerName,          // お客様名
-      item.propertyName,          // 物件名
-      item.caseType,              // 対応案件
-      item.status,                // ★ステータス
-      item.insuranceCompany,      // 保険会社名
-      item.policyHolder,          // 保険契約者
-      item.assignee,              // 担当者名
-      item.agency,                // 代理店
-      item.deliveryGroup,         // 配信用グループ
-      item.diagnosisDate,         // 診断予定日
-      item.assigneePhone,         // 担当者電話番号
-      item.address,               // 住所
-      item.assigneeEmail,         // 担当者アドレス
-      item.insuranceDocumentReceived, // 保険証書受け取り
-      item.insurancePolicyInfo    // 保険証券情報
-    ].map(v => safe(v)).join(' ').toLowerCase();
+    .secondary-btn{
+      background:#fff;
+      color:#111827;
+      border:1px solid var(--border);
+    }
 
-    const matchesKeyword = !keyword || searchTarget.includes(keyword);
-    const matchesStatus = !statusValue || safe(item.status) === statusValue;
-    const matchesCaseType = !caseTypeValue || safe(item.caseType) === caseTypeValue;
-    const matchesAgency = !agencyValue || safe(item.agency) === agencyValue;
+    .cards{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:16px;
+      margin-bottom:20px;
+    }
 
-    return matchesKeyword && matchesStatus && matchesCaseType && matchesAgency;
-  });
+    .card{
+      background:#fff;
+      padding:16px;
+      border-radius:12px;
+      box-shadow:var(--shadow);
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
 
-  renderCounts(filteredCustomers);
-  renderTable(filteredCustomers);
-}
+    .card h2{
+      margin:0;
+      font-size:28px;
+      line-height:1;
+    }
 
-function renderCounts(data) {
-  totalCount.textContent = data.length;
+    .card p{
+      margin:0;
+      font-size:13px;
+      color:var(--muted);
+    }
 
-  const progress = data.filter(v => isInProgress(v.status)).length;
-  const complete = data.filter(v => isComplete(v.status)).length;
-  const contract = data.filter(v => isContract(v.status)).length;
+    .filter{
+      background:#fff;
+      padding:16px;
+      border-radius:12px;
+      margin-bottom:20px;
+      box-shadow:var(--shadow);
+    }
 
-  progressCount.textContent = progress;
-  completeCount.textContent = complete;
-  contractCount.textContent = contract;
-}
+    .filter-row{
+      display:grid;
+      grid-template-columns:2fr 1fr 1fr 1fr auto;
+      gap:10px;
+      align-items:center;
+    }
 
-function renderTable(data) {
-  if (!data.length) {
-    tableBody.innerHTML = '<tr><td colspan="7">該当データがありません</td></tr>';
-    return;
-  }
+    .filter input,
+    .filter select{
+      width:100%;
+      padding:10px 12px;
+      border-radius:8px;
+      border:1px solid #ddd;
+      background:#fff;
+      font-size:14px;
+      outline:none;
+    }
 
-  tableBody.innerHTML = data.map(item => {
-    const statusText = safe(item.status) || '-';
-    const statusClass = getStatusClass(statusText);
+    .filter input:focus,
+    .filter select:focus{
+      border-color:#9ca3af;
+    }
 
-    return `
-      <tr>
-        <td>${escapeHtml(safe(item.no) || '-')}</td>
-        <td>${escapeHtml(safe(item.customerName) || '-')}</td>
-        <td>${escapeHtml(safe(item.propertyName) || '-')}</td>
-        <td>${statusText === '-' ? '-' : `<span class="status ${statusClass}">${escapeHtml(statusText)}</span>`}</td>
-        <td>${escapeHtml(safe(item.caseType) || '-')}</td>
-        <td>${escapeHtml(safe(item.assignee) || '-')}</td>
-        <td>${escapeHtml(safe(item.insuranceCompany) || '-')}</td>
-      </tr>
-    `;
-  }).join('');
-}
+    .table{
+      background:#fff;
+      border-radius:12px;
+      overflow:hidden;
+      box-shadow:var(--shadow);
+    }
 
-function getStatusClass(status) {
-  const s = safe(status);
+    .table-wrap{
+      overflow-x:auto;
+    }
 
-  if (
-    s.includes('入金済') ||
-    s.includes('完了') ||
-    s.includes('完工')
-  ) return 'green';
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:900px;
+    }
 
-  if (
-    s.includes('診断前') ||
-    s.includes('受付') ||
-    s.includes('未着手')
-  ) return 'blue';
+    th, td{
+      padding:14px;
+      border-bottom:1px solid #eee;
+      text-align:left;
+      font-size:14px;
+      vertical-align:middle;
+    }
 
-  return 'orange';
-}
+    thead tr{
+      background:#fafafa;
+    }
 
-function isComplete(status) {
-  const s = safe(status);
-  return s.includes('完了') || s.includes('完工') || s.includes('入金済');
-}
+    th{
+      font-size:12px;
+      color:var(--muted);
+      letter-spacing:.04em;
+      text-transform:uppercase;
+      white-space:nowrap;
+    }
 
-function isContract(status) {
-  const s = safe(status);
-  return s.includes('契約');
-}
+    tbody tr{
+      cursor:pointer;
+      transition:background .15s ease;
+    }
 
-function isInProgress(status) {
-  const s = safe(status);
-  if (!s) return false;
-  if (isComplete(s)) return false;
-  if (isContract(s)) return false;
-  return true;
-}
+    tbody tr:hover{
+      background:#fafcff;
+    }
 
-function uniqueSorted(arr) {
-  return [...new Set(arr)].sort((a, b) => a.localeCompare(b, 'ja'));
-}
+    .status{
+      display:inline-flex;
+      align-items:center;
+      padding:4px 10px;
+      border-radius:20px;
+      font-size:12px;
+      white-space:nowrap;
+      font-weight:600;
+    }
 
-function safe(v) {
-  return String(v || '').trim();
-}
+    .orange{background:var(--orange-bg);color:var(--orange-text);}
+    .green{background:var(--green-bg);color:var(--green-text);}
+    .blue{background:var(--blue-bg);color:var(--blue-text);}
+    .purple{background:var(--purple-bg);color:var(--purple-text);}
+    .yellow{background:var(--yellow-bg);color:var(--yellow-text);}
+    .slate{background:var(--slate-bg);color:var(--slate-text);}
+    .red{background:var(--red-bg);color:var(--red-text);}
 
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-</script>
+    .muted{
+      color:var(--muted);
+    }
+
+    .empty{
+      padding:36px 20px;
+      text-align:center;
+      color:var(--muted);
+      background:#fff;
+      border-radius:12px;
+      box-shadow:var(--shadow);
+    }
+
+    .hidden{
+      display:none !important;
+    }
+
+    .modal{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.4);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      z-index:999;
+    }
+
+    .modal-card{
+      width:100%;
+      max-width:720px;
+      max-height:90vh;
+      overflow:auto;
+      background:#fff;
+      border-radius:18px;
+      box-shadow:0 20px 50px rgba(0,0,0,.18);
+    }
+
+    .modal-header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:16px;
+      padding:20px;
+      border-bottom:1px solid var(--border);
+    }
+
+    .modal-title-wrap{
+      display:flex;
+      gap:14px;
+      align-items:flex-start;
+      min-width:0;
+    }
+
+    .avatar{
+      width:48px;
+      height:48px;
+      border-radius:14px;
+      background:#eef2ff;
+      color:#3730a3;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
+      font-size:18px;
+      flex:0 0 auto;
+    }
+
+    .modal-title{
+      margin:0;
+      font-size:22px;
+    }
+
+    .modal-sub{
+      color:var(--muted);
+      font-size:14px;
+      margin-top:4px;
+    }
+
+    .modal-body{
+      padding:20px;
+      display:grid;
+      gap:20px;
+    }
+
+    .section-title{
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      color:var(--muted);
+      margin:0 0 10px;
+      font-weight:700;
+    }
+
+    .info-list{
+      border:1px solid var(--border);
+      border-radius:12px;
+      overflow:hidden;
+    }
+
+    .info-row{
+      display:grid;
+      grid-template-columns:160px 1fr;
+      gap:16px;
+      padding:12px 14px;
+      border-bottom:1px solid var(--border);
+    }
+
+    .info-row:last-child{
+      border-bottom:none;
+    }
+
+    .info-label{
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .info-value{
+      font-size:14px;
+      word-break:break-word;
+    }
+
+    .modal-close{
+      background:#fff;
+      color:#111827;
+      border:1px solid var(--border);
+      box-shadow:none;
+      padding:8px 12px;
+    }
+
+    .notes-box{
+      background:#f9fafb;
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:14px;
+      white-space:pre-wrap;
+      line-height:1.7;
+      font-size:14px;
+    }
+
+    .top-note{
+      margin-bottom:14px;
+      font-size:13px;
+      color:var(--muted);
+    }
+
+    .file-input{
+      display:none;
+    }
+
+    @media (max-width: 980px){
+      .cards{
+        grid-template-columns:repeat(2,1fr);
+      }
+
+      .filter-row{
+        grid-template-columns:1fr 1fr;
+      }
+
+      .filter-row .search-col{
+        grid-column:1 / -1;
+      }
+    }
+
+    @media (max-width: 640px){
+      body{
+        padding:14px;
+      }
+
+      .cards{
+        grid-template-columns:1fr 1fr;
+        gap:12px;
+      }
+
+      .card h2{
+        font-size:24px;
+      }
+
+      .filter-row{
+        grid-template-columns:1fr;
+      }
+
+      .header{
+        align-items:flex-start;
+      }
+
+      .modal{
+        padding:10px;
+      }
+
+      .modal-header,
+      .modal-body{
+        padding:16px;
+      }
+
+      .info-row{
+        grid-template-columns:1fr;
+        gap:6px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>顧客管理</h1>
+      <div class="header-actions">
+        <label class="button-label secondary-btn" for="csvFile">CSVを読み込む</label>
+        <input id="csvFile" class="file-input" type="file" accept=".csv" />
+        <button id="sheetButton">スプレッドシートを開く</button>
+      </div>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <h2 id="statTotal">0</h2>
+        <p>総顧客数</p>
+      </div>
+      <div class="card">
+        <h2 id="statWorking">0</h2>
+        <p>対応中</p>
+      </div>
+      <div class="card">
+        <h2 id="statDone">0</h2>
+        <p>完了</p>
+      </div>
+      <div class="card">
+        <h2 id="statContracted">0</h2>
+        <p>契約済</p>
+      </div>
+    </div>
+
+    <div class="filter">
+      <div class="top-note">検索・絞り込み・行クリックで詳細確認ができます</div>
+      <div class="filter-row">
+        <div class="search-col">
+          <input id="searchInput" placeholder="お客様名・住所で検索" />
+        </div>
+
+        <select id="statusFilter">
+          <option value="all">すべてのステータス</option>
+        </select>
+
+        <select id="caseTypeFilter">
+          <option value="all">すべての案件</option>
+        </select>
+
+        <select id="agencyFilter">
+          <option value="all">すべての代理店</option>
+        </select>
+
+        <button id="resetButton" class="secondary-btn">リセット</button>
+      </div>
+    </div>
+
+    <div id="emptyState" class="empty hidden">該当するお客様が見つかりません</div>
+
+    <div class="table" id="tableContainer">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>NO</th>
+              <th>お客様名</th>
+              <th>物件名</th>
+              <th>ステータス</th>
+              <th>対応案件</th>
+              <th>担当者</th>
+              <th>保険会社</th>
+            </tr>
+          </thead>
+          <tbody id="customerTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="detailModal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="avatar" id="modalAvatar">顧</div>
+          <div>
+            <h2 class="modal-title" id="modalName">-</h2>
+            <div class="modal-sub" id="modalProperty">-</div>
+            <div style="margin-top:8px;">
+              <span id="modalStatus"></span>
+            </div>
+          </div>
+        </div>
+        <button class="modal-close" id="closeModalButton">閉じる</button>
+      </div>
+
+      <div class="modal-body">
+        <section>
+          <h3 class="section-title">基本情報</h3>
+          <div class="info-list" id="basicInfoList"></div>
+        </section>
+
+        <section id="moneySection" class="hidden">
+          <h3 class="section-title">金額情報</h3>
+          <div class="info-list" id="moneyInfoList"></div>
+        </section>
+
+        <section id="linkSection" class="hidden">
+          <h3 class="section-title">リンク</h3>
+          <div class="info-list" id="linkInfoList"></div>
+        </section>
+
+        <section id="notesSection" class="hidden">
+          <h3 class="section-title">備考</h3>
+          <div class="notes-box" id="modalNotes"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const initialCustomers = [
+      {
+        no: 2,
+        customer_name: "大坪 博幸",
+        property_name: "自宅",
+        status: "3．書類作成中",
+        case_type: "診断",
+        person_in_charge: "-",
+        insurance_company: "東京海上",
+        agency: "A代理店",
+        phone: "090-1111-2222",
+        address: "東京都新宿区西新宿1-1-1",
+        decision_amount: "",
+        payment_deadline: "",
+        payment_received: "",
+        notes: "必要書類を案内済み。提出待ち。",
+        folder_url: ""
+      },
+      {
+        no: 5,
+        customer_name: "株式会社イースト",
+        property_name: "本社",
+        status: "6．入金済",
+        case_type: "診断",
+        person_in_charge: "-",
+        insurance_company: "東京海上",
+        agency: "B代理店",
+        phone: "03-2222-3333",
+        address: "東京都港区芝公園2-2-2",
+        decision_amount: "320,000円",
+        payment_deadline: "2026-03-31",
+        payment_received: "320,000円",
+        notes: "入金確認済み。完了処理のみ残り。",
+        folder_url: "https://example.com/folder/east"
+      },
+      {
+        no: 8,
+        customer_name: "テスト株式会社",
+        property_name: "本社",
+        status: "1．診断前",
+        case_type: "診断",
+        person_in_charge: "-",
+        insurance_company: "損保ジャパン",
+        agency: "A代理店",
+        phone: "03-9999-8888",
+        address: "神奈川県横浜市西区みなとみらい3-3-3",
+        decision_amount: "",
+        payment_deadline: "",
+        payment_received: "",
+        notes: "初回連絡前。",
+        folder_url: ""
+      },
+      {
+        no: 11,
+        customer_name: "山林 さちこ",
+        property_name: "はなれ",
+        status: "",
+        case_type: "診断",
+        person_in_charge: "-",
+        insurance_company: "-",
+        agency: "C代理店",
+        phone: "080-3333-4444",
+        address: "埼玉県川口市4-4-4",
+        decision_amount: "",
+        payment_deadline: "",
+        payment_received: "",
+        notes: "",
+        folder_url: ""
+      },
+      {
+        no: 14,
+        customer_name: "小林 えいじ",
+        property_name: "-",
+        status: "",
+        case_type: "診断",
+        person_in_charge: "-",
+        insurance_company: "-",
+        agency: "C代理店",
+        phone: "080-7777-1234",
+        address: "千葉県船橋市5-5-5",
+        decision_amount: "",
+        payment_deadline: "",
+        payment_received: "",
+        notes: "",
+        folder_url: ""
+      },
+      {
+        no: 16,
+        customer_name: "中田 一郎",
+        property_name: "別宅",
+        status: "4．申請済",
+        case_type: "申請",
+        person_in_charge: "田中",
+        insurance_company: "三井住友海上",
+        agency: "B代理店",
+        phone: "090-5555-6666",
+        address: "東京都世田谷区6-6-6",
+        decision_amount: "",
+        payment_deadline: "",
+        payment_received: "",
+        notes: "申請後、結果待ち。",
+        folder_url: ""
+      },
+      {
+        no: 17,
+        customer_name: "合同会社みらい",
+        property_name: "店舗",
+        status: "5．決定通知待",
+        case_type: "診断",
+        person_in_charge: "佐藤",
+        insurance_company: "あいおいニッセイ",
+        agency: "A代理店",
+        phone: "03-4545-7878",
+        address: "東京都台東区7-7-7",
+        decision_amount: "150,000円",
+        payment_deadline: "",
+        payment_received: "",
+        notes: "決定通知待ち。",
+        folder_url: ""
+      },
+      {
+        no: 18,
+        customer_name: "鈴木 花子",
+        property_name: "自宅",
+        status: "0．キャンセル",
+        case_type: "診断",
+        person_in_charge: "-",
+        insurance_company: "東京海上",
+        agency: "A代理店",
+        phone: "090-1212-5656",
+        address: "東京都杉並区8-8-8",
+        decision_amount: "",
+        payment_deadline: "",
+        payment_received: "",
+        notes: "お客様都合で中止。",
+        folder_url: ""
+      }
+    ];
+
+    let customers = [...initialCustomers];
+    let filters = {
+      search: "",
+      status: "all",
+      caseType: "all",
+      agency: "all"
+    };
+
+    const customerTableBody = document.getElementById("customerTableBody");
+    const searchInput = document.getElementById("searchInput");
+    const statusFilter = document.getElementById("statusFilter");
+    const caseTypeFilter = document.getElementById("caseTypeFilter");
+    const agencyFilter = document.getElementById("agencyFilter");
+    const resetButton = document.getElementById("resetButton");
+    const emptyState = document.getElementById("emptyState");
+    const tableContainer = document.getElementById("tableContainer");
+    const csvFile = document.getElementById("csvFile");
+    const sheetButton = document.getElementById("sheetButton");
+
+    const detailModal = document.getElementById("detailModal");
+    const closeModalButton = document.getElementById("closeModalButton");
+    const modalAvatar = document.getElementById("modalAvatar");
+    const modalName = document.getElementById("modalName");
+    const modalProperty = document.getElementById("modalProperty");
+    const modalStatus = document.getElementById("modalStatus");
+    const basicInfoList = document.getElementById("basicInfoList");
+    const moneySection = document.getElementById("moneySection");
+    const moneyInfoList = document.getElementById("moneyInfoList");
+    const linkSection = document.getElementById("linkSection");
+    const linkInfoList = document.getElementById("linkInfoList");
+    const notesSection = document.getElementById("notesSection");
+    const modalNotes = document.getElementById("modalNotes");
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function getStatusClass(status) {
+      const map = {
+        "0．キャンセル": "slate",
+        "1．診断前": "blue",
+        "2．証書待ち": "purple",
+        "3．書類作成中": "orange",
+        "4．申請済": "orange",
+        "5．決定通知待": "yellow",
+        "6．入金済": "green",
+        "7．代理店支払い済": "green"
+      };
+      return map[status] || "";
+    }
+
+    function statusBadge(status) {
+      if (!status) return "-";
+      return '<span class="status ' + getStatusClass(status) + '">' + escapeHtml(status) + '</span>';
+    }
+
+    function uniqueValues(key) {
+      return [...new Set(
+        customers
+          .map(item => (item[key] ?? "").toString().trim())
+          .filter(Boolean)
+          .filter(v => v !== "-")
+      )];
+    }
+
+    function fillSelect(selectElement, items, defaultLabel) {
+      const current = selectElement.value;
+      selectElement.innerHTML = "";
+      const defaultOption = document.createElement("option");
+      defaultOption.value = "all";
+      defaultOption.textContent = defaultLabel;
+      selectElement.appendChild(defaultOption);
+
+      items.forEach(item => {
+        const option = document.createElement("option");
+        option.value = item;
+        option.textContent = item;
+        selectElement.appendChild(option);
+      });
+
+      if ([...selectElement.options].some(opt => opt.value === current)) {
+        selectElement.value = current;
+      } else {
+        selectElement.value = "all";
+      }
+    }
+
+    function setupFilters() {
+      fillSelect(statusFilter, uniqueValues("status"), "すべてのステータス");
+      fillSelect(caseTypeFilter, uniqueValues("case_type"), "すべての案件");
+      fillSelect(agencyFilter, uniqueValues("agency"), "すべての代理店");
+    }
+
+    function getFilteredCustomers() {
+      return customers.filter(customer => {
+        const searchText = (
+          (customer.customer_name || "") + " " +
+          (customer.address || "") + " " +
+          (customer.property_name || "")
+        ).toLowerCase();
+
+        const matchesSearch = !filters.search || searchText.includes(filters.search.toLowerCase());
+        const matchesStatus = filters.status === "all" || (customer.status || "") === filters.status;
+        const matchesCaseType = filters.caseType === "all" || (customer.case_type || "") === filters.caseType;
+        const matchesAgency = filters.agency === "all" || (customer.agency || "") === filters.agency;
+
+        return matchesSearch && matchesStatus && matchesCaseType && matchesAgency;
+      });
+    }
+
+    function updateStats(filteredCustomers) {
+      const total = filteredCustomers.length;
+      const working = filteredCustomers.filter(c =>
+        ["1．診断前", "2．証書待ち", "3．書類作成中", "4．申請済", "5．決定通知待"].includes(c.status)
+      ).length;
+      const done = filteredCustomers.filter(c =>
+        ["6．入金済", "7．代理店支払い済"].includes(c.status)
+      ).length;
+      const contracted = filteredCustomers.filter(c =>
+        (c.status || "").includes("契約") || c.contracted === "✔"
+      ).length;
+
+      document.getElementById("statTotal").textContent = total;
+      document.getElementById("statWorking").textContent = working;
+      document.getElementById("statDone").textContent = done;
+      document.getElementById("statContracted").textContent = contracted;
+    }
+
+    function renderTable() {
+      const filtered = getFilteredCustomers();
+      customerTableBody.innerHTML = "";
+
+      if (!filtered.length) {
+        emptyState.classList.remove("hidden");
+        tableContainer.classList.add("hidden");
+      } else {
+        emptyState.classList.add("hidden");
+        tableContainer.classList.remove("hidden");
+      }
+
+      filtered.forEach(customer => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${escapeHtml(customer.no ?? "-")}</td>
+          <td>${escapeHtml(customer.customer_name || "-")}</td>
+          <td>${escapeHtml(customer.property_name || "-")}</td>
+          <td>${statusBadge(customer.status)}</td>
+          <td>${escapeHtml(customer.case_type || "-")}</td>
+          <td>${escapeHtml(customer.person_in_charge || "-")}</td>
+          <td>${escapeHtml(customer.insurance_company || "-")}</td>
+        `;
+        tr.addEventListener("click", () => openModal(customer));
+        customerTableBody.appendChild(tr);
+      });
+
+      updateStats(filtered);
+    }
+
+    function infoRow(label, value) {
+      if (value === null || value === undefined || value === "" || value === "-" || value === "—") return "";
+      return `
+        <div class="info-row">
+          <div class="info-label">${escapeHtml(label)}</div>
+          <div class="info-value">${escapeHtml(value)}</div>
+        </div>
+      `;
+    }
+
+    function linkRow(label, value) {
+      if (!value) return "";
+      const safeUrl = escapeHtml(value);
+      return `
+        <div class="info-row">
+          <div class="info-label">${escapeHtml(label)}</div>
+          <div class="info-value">
+            <a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeUrl}</a>
+          </div>
+        </div>
+      `;
+    }
+
+    function openModal(customer) {
+      modalAvatar.textContent = (customer.customer_name || "顧").charAt(0);
+      modalName.textContent = customer.customer_name || "-";
+      modalProperty.textContent = customer.property_name || "-";
+      modalStatus.innerHTML = statusBadge(customer.status);
+
+      basicInfoList.innerHTML = [
+        infoRow("対応案件", customer.case_type),
+        infoRow("保険会社", customer.insurance_company),
+        infoRow("担当者", customer.person_in_charge),
+        infoRow("代理店", customer.agency),
+        infoRow("電話番号", customer.phone),
+        infoRow("住所", customer.address),
+        infoRow("物件名", customer.property_name)
+      ].join("");
+
+      const moneyHtml = [
+        infoRow("決定通知額", customer.decision_amount),
+        infoRow("支払い期限", customer.payment_deadline),
+        infoRow("入金額", customer.payment_received)
+      ].join("");
+
+      moneyInfoList.innerHTML = moneyHtml;
+      moneySection.classList.toggle("hidden", !moneyHtml);
+
+      const linkHtml = linkRow("フォルダURL", customer.folder_url);
+      linkInfoList.innerHTML = linkHtml;
+      linkSection.classList.toggle("hidden", !linkHtml);
+
+      const notes = (customer.notes || "").trim();
+      modalNotes.textContent = notes;
+      notesSection.classList.toggle("hidden", !notes);
+
+      detailModal.classList.remove("hidden");
+    }
+
+    function closeModal() {
+      detailModal.classList.add("hidden");
+    }
+
+    function resetFilters() {
+      filters = {
+        search: "",
+        status: "all",
+        caseType: "all",
+        agency: "all"
+      };
+
+      searchInput.value = "";
+      statusFilter.value = "all";
+      caseTypeFilter.value = "all";
+      agencyFilter.value = "all";
+      renderTable();
+    }
+
+    function parseCSVLine(line) {
+      const result = [];
+      let current = "";
+      let inQuotes = false;
+
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        const next = line[i + 1];
+
+        if (char === '"' && inQuotes && next === '"') {
+          current += '"';
+          i++;
+        } else if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === "," && !inQuotes) {
+          result.push(current);
+          current = "";
+        } else {
+          current += char;
+        }
+      }
+      result.push(current);
+      return result.map(v => v.trim());
+    }
+
+    function parseCSV(text) {
+      const lines = text
+        .replace(/\r\n/g, "\n")
+        .replace(/\r/g, "\n")
+        .split("\n")
+        .filter(line => line.trim() !== "");
+
+      if (lines.length < 2) return [];
+
+      const headers = parseCSVLine(lines[0]).map(h => h.trim());
+      return lines.slice(1).map(line => {
+        const values = parseCSVLine(line);
+        const row = {};
+        headers.forEach((header, index) => {
+          row[header] = values[index] ?? "";
+        });
+        return row;
+      });
+    }
+
+    function normalizeImportedRow(row, index) {
+      return {
+        no: row.no || row.NO || row.No || row["番号"] || row["no"] || (customers.length + index + 1),
+        customer_name: row.customer_name || row["customer_name"] || row["お客様名"] || row["顧客名"] || "",
+        property_name: row.property_name || row["物件名"] || "",
+        status: row.status || row["ステータス"] || "",
+        case_type: row.case_type || row["対応案件"] || "",
+        person_in_charge: row.person_in_charge || row["担当者"] || "-",
+        insurance_company: row.insurance_company || row["保険会社"] || "-",
+        agency: row.agency || row["代理店"] || "",
+        phone: row.phone || row["電話番号"] || "",
+        address: row.address || row["住所"] || "",
+        decision_amount: row.decision_amount || row["決定通知額"] || "",
+        payment_deadline: row.payment_deadline || row["支払い期限"] || "",
+        payment_received: row.payment_received || row["入金額"] || "",
+        notes: row.notes || row["備考"] || "",
+        folder_url: row.folder_url || row["フォルダURL"] || ""
+      };
+    }
+
+    searchInput.addEventListener("input", (e) => {
+      filters.search = e.target.value;
+      renderTable();
+    });
+
+    statusFilter.addEventListener("change", (e) => {
+      filters.status = e.target.value;
+      renderTable();
+    });
+
+    caseTypeFilter.addEventListener("change", (e) => {
+      filters.caseType = e.target.value;
+      renderTable();
+    });
+
+    agencyFilter.addEventListener("change", (e) => {
+      filters.agency = e.target.value;
+      renderTable();
+    });
+
+    resetButton.addEventListener("click", resetFilters);
+
+    csvFile.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        try {
+          const text = event.target.result;
+          const rows = parseCSV(text);
+          const imported = rows
+            .map(normalizeImportedRow)
+            .filter(row => row.customer_name);
+
+          if (!imported.length) {
+            alert("読み込める顧客データが見つかりませんでした。");
+            return;
+          }
+
+          customers = imported;
+          setupFilters();
+          resetFilters();
+          alert(imported.length + "件の顧客データを読み込みました。");
+        } catch (error) {
+          console.error(error);
+          alert("CSVの読み込みに失敗しました。");
+        } finally {
+          csvFile.value = "";
+        }
+      };
+      reader.readAsText(file, "UTF-8");
+    });
+
+    sheetButton.addEventListener("click", () => {
+      alert("ここにスプレッドシートURLを設定してください。");
+    });
+
+    closeModalButton.addEventListener("click", closeModal);
+
+    detailModal.addEventListener("click", (e) => {
+      if (e.target === detailModal) closeModal();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeModal();
+    });
+
+    setupFilters();
+    renderTable();
+  </script>
 </body>
 </html>
