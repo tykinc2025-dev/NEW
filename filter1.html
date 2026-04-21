@@ -91,21 +91,21 @@ th, td{
 
 <div class="header">
   <h1>顧客管理</h1>
-  <button>スプレッドシートを開く</button>
+  <button id="openSheetBtn">スプレッドシートを開く</button>
 </div>
 
 <div class="cards">
-  <div class="card"><h2>22</h2>総顧客数</div>
-  <div class="card"><h2>8</h2>対応中</div>
-  <div class="card"><h2>2</h2>完了</div>
-  <div class="card"><h2>0</h2>契約済</div>
+  <div class="card"><h2 id="totalCount">0</h2>総顧客数</div>
+  <div class="card"><h2 id="progressCount">0</h2>対応中</div>
+  <div class="card"><h2 id="completeCount">0</h2>完了</div>
+  <div class="card"><h2 id="contractCount">0</h2>契約済</div>
 </div>
 
 <div class="filter">
-  <input placeholder="お客様名・住所で検索">
-  <select><option>すべてのステータス</option></select>
-  <select><option>診断</option></select>
-  <select><option>すべての代理店</option></select>
+  <input id="searchInput" placeholder="お客様名・住所で検索">
+  <select id="statusFilter"><option>すべてのステータス</option></select>
+  <select id="caseTypeFilter"><option>診断</option></select>
+  <select id="agencyFilter"><option>すべての代理店</option></select>
 </div>
 
 <div class="table">
@@ -122,61 +122,235 @@ th, td{
 </tr>
 </thead>
 
-<tbody>
+<tbody id="customerTableBody">
 <tr>
-<td>2</td>
-<td>大坪 博幸</td>
-<td>自宅</td>
-<td><span class="status orange">3. 書類作成中</span></td>
-<td>診断</td>
-<td>-</td>
-<td>東京海上</td>
+<td colspan="7">読み込み中...</td>
 </tr>
-
-<tr>
-<td>5</td>
-<td>株式会社イースト</td>
-<td>本社</td>
-<td><span class="status green">6. 入金済</span></td>
-<td>診断</td>
-<td>-</td>
-<td>東京海上</td>
-</tr>
-
-<tr>
-<td>8</td>
-<td>テスト株式会社</td>
-<td>本社</td>
-<td><span class="status blue">1. 診断前</span></td>
-<td>診断</td>
-<td>-</td>
-<td>損保ジャパン</td>
-</tr>
-
-<tr>
-<td>11</td>
-<td>山林 さちこ</td>
-<td>はなれ</td>
-<td>-</td>
-<td>診断</td>
-<td>-</td>
-<td>-</td>
-</tr>
-
-<tr>
-<td>14</td>
-<td>小林 えいじ</td>
-<td>-</td>
-<td>-</td>
-<td>診断</td>
-<td>-</td>
-<td>-</td>
-</tr>
-
 </tbody>
 </table>
 </div>
 
 </div>
+
+<script>
+const SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1z_q03FJikHrKr-KhdQVvOVFU8qkUvm1dI35I4QtUzlo/edit?gid=673017177#gid=673017177';
+const GAS_WEBAPP_URL = 'YOUR_GAS_WEBAPP_URL';
+
+let allCustomers = [];
+let filteredCustomers = [];
+
+const searchInput = document.getElementById('searchInput');
+const statusFilter = document.getElementById('statusFilter');
+const caseTypeFilter = document.getElementById('caseTypeFilter');
+const agencyFilter = document.getElementById('agencyFilter');
+const tableBody = document.getElementById('customerTableBody');
+
+const totalCount = document.getElementById('totalCount');
+const progressCount = document.getElementById('progressCount');
+const completeCount = document.getElementById('completeCount');
+const contractCount = document.getElementById('contractCount');
+const openSheetBtn = document.getElementById('openSheetBtn');
+
+openSheetBtn.addEventListener('click', () => {
+  window.open(SPREADSHEET_URL, '_blank');
+});
+
+searchInput.addEventListener('input', applyFilters);
+statusFilter.addEventListener('change', applyFilters);
+caseTypeFilter.addEventListener('change', applyFilters);
+agencyFilter.addEventListener('change', applyFilters);
+
+loadCustomerData();
+
+function loadCustomerData() {
+  jsonpFetch(GAS_WEBAPP_URL)
+    .then(res => {
+      if (!res || !res.success) {
+        throw new Error(res && res.message ? res.message : 'データ取得に失敗しました');
+      }
+
+      allCustomers = Array.isArray(res.data) ? res.data : [];
+
+      buildFilterOptions(allCustomers);
+      applyFilters();
+    })
+    .catch(err => {
+      console.error(err);
+      tableBody.innerHTML = '<tr><td colspan="7">データの読み込みに失敗しました</td></tr>';
+    });
+}
+
+function jsonpFetch(url) {
+  return new Promise((resolve, reject) => {
+    const callbackName = 'jsonp_callback_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+    const script = document.createElement('script');
+
+    window[callbackName] = function(data) {
+      resolve(data);
+      cleanup();
+    };
+
+    script.onerror = function() {
+      reject(new Error('JSONP読み込み失敗'));
+      cleanup();
+    };
+
+    function cleanup() {
+      delete window[callbackName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+
+    const sep = url.includes('?') ? '&' : '?';
+    script.src = url + sep + 'callback=' + callbackName;
+    document.body.appendChild(script);
+  });
+}
+
+function buildFilterOptions(data) {
+  const statuses = uniqueSorted(
+    data.map(v => safe(v.status)).filter(v => v !== '')
+  );
+  const caseTypes = uniqueSorted(
+    data.map(v => safe(v.caseType)).filter(v => v !== '')
+  );
+  const agencies = uniqueSorted(
+    data.map(v => safe(v.agency)).filter(v => v !== '')
+  );
+
+  statusFilter.innerHTML = '<option>すべてのステータス</option>' +
+    statuses.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+
+  // 元UIの最初の見た目を崩さないため、1番上は「診断」
+  // 実データに「診断」がなくても一旦固定で残す
+  const caseTypeOptions = ['診断', ...caseTypes.filter(v => v !== '診断')];
+  caseTypeFilter.innerHTML = caseTypeOptions
+    .map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`)
+    .join('');
+
+  agencyFilter.innerHTML = '<option>すべての代理店</option>' +
+    agencies.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+}
+
+function applyFilters() {
+  const keyword = safe(searchInput.value).toLowerCase();
+  const statusValue = safe(statusFilter.value);
+  const caseTypeValue = safe(caseTypeFilter.value);
+  const agencyValue = safe(agencyFilter.value);
+
+  filteredCustomers = allCustomers.filter(item => {
+    const searchTarget = [
+      item.customerName,
+      item.address,
+      item.propertyName,
+      item.no,
+      item.status,
+      item.caseType,
+      item.assignee,
+      item.insuranceCompany,
+      item.agency,
+      item.sourceSheet
+    ].join(' ').toLowerCase();
+
+    const matchesKeyword = !keyword || searchTarget.includes(keyword);
+    const matchesStatus = statusValue === 'すべてのステータス' || safe(item.status) === statusValue;
+    const matchesCaseType = !caseTypeValue || safe(item.caseType) === caseTypeValue;
+    const matchesAgency = agencyValue === 'すべての代理店' || safe(item.agency) === agencyValue;
+
+    return matchesKeyword && matchesStatus && matchesCaseType && matchesAgency;
+  });
+
+  renderCounts(filteredCustomers);
+  renderTable(filteredCustomers);
+}
+
+function renderCounts(data) {
+  totalCount.textContent = data.length;
+
+  const progress = data.filter(v => isInProgress(v.status)).length;
+  const complete = data.filter(v => isComplete(v.status)).length;
+  const contract = data.filter(v => isContract(v.status)).length;
+
+  progressCount.textContent = progress;
+  completeCount.textContent = complete;
+  contractCount.textContent = contract;
+}
+
+function renderTable(data) {
+  if (!data.length) {
+    tableBody.innerHTML = '<tr><td colspan="7">該当データがありません</td></tr>';
+    return;
+  }
+
+  tableBody.innerHTML = data.map(item => {
+    const statusText = safe(item.status) || '-';
+    const statusClass = getStatusClass(statusText);
+
+    return `
+      <tr>
+        <td>${escapeHtml(safe(item.no) || '-')}</td>
+        <td>${escapeHtml(safe(item.customerName) || '-')}</td>
+        <td>${escapeHtml(safe(item.propertyName) || '-')}</td>
+        <td>${statusText === '-' ? '-' : `<span class="status ${statusClass}">${escapeHtml(statusText)}</span>`}</td>
+        <td>${escapeHtml(safe(item.caseType) || '-')}</td>
+        <td>${escapeHtml(safe(item.assignee) || '-')}</td>
+        <td>${escapeHtml(safe(item.insuranceCompany) || '-')}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function getStatusClass(status) {
+  const s = safe(status);
+
+  if (
+    s.includes('入金済') ||
+    s.includes('完了') ||
+    s.includes('完工')
+  ) return 'green';
+
+  if (
+    s.includes('診断前') ||
+    s.includes('受付') ||
+    s.includes('未着手')
+  ) return 'blue';
+
+  return 'orange';
+}
+
+function isComplete(status) {
+  const s = safe(status);
+  return s.includes('完了') || s.includes('完工') || s.includes('入金済');
+}
+
+function isContract(status) {
+  const s = safe(status);
+  return s.includes('契約');
+}
+
+function isInProgress(status) {
+  const s = safe(status);
+  if (!s) return false;
+  if (isComplete(s)) return false;
+  if (isContract(s)) return false;
+  return true;
+}
+
+function uniqueSorted(arr) {
+  return [...new Set(arr)].sort((a, b) => a.localeCompare(b, 'ja'));
+}
+
+function safe(v) {
+  return String(v || '').trim();
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+</script>
 </body>
 </html>
