@@ -103,9 +103,9 @@ th, td{
 
 <div class="filter">
   <input id="searchInput" placeholder="お客様名・住所で検索">
-  <select id="statusFilter"><option>すべてのステータス</option></select>
-  <select id="caseTypeFilter"><option>診断</option></select>
-  <select id="agencyFilter"><option>すべての代理店</option></select>
+  <select id="statusFilter"><option value="">すべてのステータス</option></select>
+  <select id="caseTypeFilter"><option value="">すべての対応案件</option></select>
+  <select id="agencyFilter"><option value="">すべての代理店</option></select>
 </div>
 
 <div class="table">
@@ -176,7 +176,7 @@ function loadCustomerData() {
     })
     .catch(err => {
       console.error(err);
-      tableBody.innerHTML = '<tr><td colspan="7">データの読み込みに失敗しました</td></tr>';
+      tableBody.innerHTML = `<tr><td colspan="7">${escapeHtml(err.message || 'データの読み込みに失敗しました')}</td></tr>`;
     });
 }
 
@@ -196,12 +196,16 @@ function jsonpFetch(url) {
     };
 
     function cleanup() {
-      delete window[callbackName];
+      try {
+        delete window[callbackName];
+      } catch (e) {
+        window[callbackName] = undefined;
+      }
       if (script.parentNode) script.parentNode.removeChild(script);
     }
 
     const sep = url.includes('?') ? '&' : '?';
-    script.src = url + sep + 'callback=' + callbackName;
+    script.src = url + sep + 'callback=' + encodeURIComponent(callbackName);
     document.body.appendChild(script);
   });
 }
@@ -210,24 +214,25 @@ function buildFilterOptions(data) {
   const statuses = uniqueSorted(
     data.map(v => safe(v.status)).filter(v => v !== '')
   );
+
   const caseTypes = uniqueSorted(
     data.map(v => safe(v.caseType)).filter(v => v !== '')
   );
+
   const agencies = uniqueSorted(
     data.map(v => safe(v.agency)).filter(v => v !== '')
   );
 
-  statusFilter.innerHTML = '<option>すべてのステータス</option>' +
+  statusFilter.innerHTML =
+    '<option value="">すべてのステータス</option>' +
     statuses.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
 
-  // 元UIの最初の見た目を崩さないため、1番上は「診断」
-  // 実データに「診断」がなくても一旦固定で残す
-  const caseTypeOptions = ['診断', ...caseTypes.filter(v => v !== '診断')];
-  caseTypeFilter.innerHTML = caseTypeOptions
-    .map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`)
-    .join('');
+  caseTypeFilter.innerHTML =
+    '<option value="">すべての対応案件</option>' +
+    caseTypes.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
 
-  agencyFilter.innerHTML = '<option>すべての代理店</option>' +
+  agencyFilter.innerHTML =
+    '<option value="">すべての代理店</option>' +
     agencies.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
 }
 
@@ -239,22 +244,27 @@ function applyFilters() {
 
   filteredCustomers = allCustomers.filter(item => {
     const searchTarget = [
-      item.customerName,
-      item.address,
-      item.propertyName,
-      item.no,
-      item.status,
-      item.caseType,
-      item.assignee,
-      item.insuranceCompany,
-      item.agency,
-      item.sourceSheet
-    ].join(' ').toLowerCase();
+      item.customerName,          // お客様名
+      item.propertyName,          // 物件名
+      item.caseType,              // 対応案件
+      item.status,                // ★ステータス
+      item.insuranceCompany,      // 保険会社名
+      item.policyHolder,          // 保険契約者
+      item.assignee,              // 担当者名
+      item.agency,                // 代理店
+      item.deliveryGroup,         // 配信用グループ
+      item.diagnosisDate,         // 診断予定日
+      item.assigneePhone,         // 担当者電話番号
+      item.address,               // 住所
+      item.assigneeEmail,         // 担当者アドレス
+      item.insuranceDocumentReceived, // 保険証書受け取り
+      item.insurancePolicyInfo    // 保険証券情報
+    ].map(v => safe(v)).join(' ').toLowerCase();
 
     const matchesKeyword = !keyword || searchTarget.includes(keyword);
-    const matchesStatus = statusValue === 'すべてのステータス' || safe(item.status) === statusValue;
+    const matchesStatus = !statusValue || safe(item.status) === statusValue;
     const matchesCaseType = !caseTypeValue || safe(item.caseType) === caseTypeValue;
-    const matchesAgency = agencyValue === 'すべての代理店' || safe(item.agency) === agencyValue;
+    const matchesAgency = !agencyValue || safe(item.agency) === agencyValue;
 
     return matchesKeyword && matchesStatus && matchesCaseType && matchesAgency;
   });
