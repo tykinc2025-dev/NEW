@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>顧客管理UI</title>
+<style>
+body{
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background:#f5f6f8;
+  margin:0;
+  padding:20px;
+  color:#333;
+}
+
+.container{
+  max-width:1200px;
+  margin:auto;
+}
+
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:20px;
+}
+
+.cards{
+  display:grid;
+  grid-template-columns: repeat(4,1fr);
+  gap:16px;
+  margin-bottom:20px;
+}
+
+.card{
+  background:#fff;
+  padding:16px;
+  border-radius:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,0.08);
+}
+
+.card h2{
+  margin:0;
+  font-size:28px;
+}
+
+.filter{
+  background:#fff;
+  padding:16px;
+  border-radius:12px;
+  margin-bottom:20px;
+}
+
+.filter input, .filter select{
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #ddd;
+  margin-right:10px;
+}
+
+.table{
+  background:#fff;
+  border-radius:12px;
+  overflow:hidden;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+th, td{
+  padding:14px;
+  border-bottom:1px solid #eee;
+  text-align:left;
+}
+
+.status{
+  padding:4px 10px;
+  border-radius:20px;
+  font-size:12px;
+}
+
+.orange{background:#fff4e5;color:#d97706;}
+.green{background:#e6f9f0;color:#059669;}
+.blue{background:#e6f0ff;color:#2563eb;}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<div class="header">
+  <h1>顧客管理</h1>
+  <button>スプレッドシートを開く</button>
+</div>
+
+<div class="cards">
+  <div class="card"><h2>22</h2>総顧客数</div>
+  <div class="card"><h2>8</h2>対応中</div>
+  <div class="card"><h2>2</h2>完了</div>
+  <div class="card"><h2>0</h2>契約済</div>
+</div>
+
+<div class="filter">
+  <input placeholder="お客様名・住所で検索">
+  <select><option>すべてのステータス</option></select>
+  <select><option>診断</option></select>
+  <select><option>すべての代理店</option></select>
+</div>
+
+<div class="table">
+<table>
+<thead>
+<tr>
+<th>NO</th>
+<th>お客様名</th>
+<th>物件名</th>
+<th>ステータス</th>
+<th>対応案件</th>
+<th>担当者</th>
+<th>保険会社</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>2</td>
+<td>大坪 博幸</td>
+<td>自宅</td>
+<td><span class="status orange">3. 書類作成中</span></td>
+<td>診断</td>
+<td>-</td>
+<td>東京海上</td>
+</tr>
+
+<tr>
+<td>5</td>
+<td>株式会社イースト</td>
+<td>本社</td>
+<td><span class="status green">6. 入金済</span></td>
+<td>診断</td>
+<td>-</td>
+<td>東京海上</td>
+</tr>
+
+<tr>
+<td>8</td>
+<td>テスト株式会社</td>
+<td>本社</td>
+<td><span class="status blue">1. 診断前</span></td>
+<td>診断</td>
+<td>-</td>
+<td>損保ジャパン</td>
+</tr>
+
+<tr>
+<td>11</td>
+<td>山林 さちこ</td>
+<td>はなれ</td>
+<td>-</td>
+<td>診断</td>
+<td>-</td>
+<td>-</td>
+</tr>
+
+<tr>
+<td>14</td>
+<td>小林 えいじ</td>
+<td>-</td>
+<td>-</td>
+<td>診断</td>
+<td>-</td>
+<td>-</td>
+</tr>
+
+</tbody>
+</table>
+</div>
+
+</div>
+</body>
+</html>
