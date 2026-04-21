@@ -1,1058 +1,772 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>顧客管理UI</title>
-  <style>
-    :root{
-      --bg:#f5f6f8;
-      --card:#ffffff;
-      --text:#333333;
-      --muted:#6b7280;
-      --border:#e5e7eb;
-      --shadow:0 1px 3px rgba(0,0,0,0.08);
-      --primary:#111827;
-      --orange-bg:#fff4e5;
-      --orange-text:#d97706;
-      --green-bg:#e6f9f0;
-      --green-text:#059669;
-      --blue-bg:#e6f0ff;
-      --blue-text:#2563eb;
-      --purple-bg:#f3e8ff;
-      --purple-text:#7c3aed;
-      --yellow-bg:#fef9c3;
-      --yellow-text:#a16207;
-      --slate-bg:#f1f5f9;
-      --slate-text:#64748b;
-      --red-bg:#fee2e2;
-      --red-text:#dc2626;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>顧客管理UI</title>
+<style>
+body{
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background:#f5f6f8;
+  margin:0;
+  padding:20px;
+  color:#333;
+}
 
-    *{
-      box-sizing:border-box;
-    }
+.container{
+  max-width:1200px;
+  margin:auto;
+}
 
-    body{
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-      background:var(--bg);
-      margin:0;
-      padding:20px;
-      color:var(--text);
-    }
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:20px;
+  gap:12px;
+  flex-wrap:wrap;
+}
 
-    .container{
-      max-width:1200px;
-      margin:auto;
-    }
+.cards{
+  display:grid;
+  grid-template-columns: repeat(4,1fr);
+  gap:16px;
+  margin-bottom:20px;
+}
 
-    .header{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:12px;
-      margin-bottom:20px;
-      flex-wrap:wrap;
-    }
+.card{
+  background:#fff;
+  padding:16px;
+  border-radius:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,0.08);
+}
 
-    .header-actions{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-    }
+.card h2{
+  margin:0;
+  font-size:28px;
+}
 
-    h1{
-      margin:0;
-      font-size:28px;
-    }
+.filter{
+  background:#fff;
+  padding:16px;
+  border-radius:12px;
+  margin-bottom:20px;
+}
 
-    button,
-    .button-label{
-      border:none;
-      background:#111827;
-      color:#fff;
-      padding:10px 14px;
-      border-radius:10px;
-      cursor:pointer;
-      font-size:14px;
-      box-shadow:var(--shadow);
-      transition:0.2s;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-      text-decoration:none;
-    }
+.filter-row{
+  display:grid;
+  grid-template-columns: 1fr 2fr 1fr 1fr 1fr 1fr;
+  gap:10px;
+}
 
-    button:hover,
-    .button-label:hover{
-      opacity:0.92;
-      transform:translateY(-1px);
-    }
+.filter input, .filter select{
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #ddd;
+  width:100%;
+  background:#fff;
+  box-sizing:border-box;
+}
 
-    .secondary-btn{
-      background:#fff;
-      color:#111827;
-      border:1px solid var(--border);
-    }
+.table{
+  background:#fff;
+  border-radius:12px;
+  overflow:hidden;
+}
 
-    .cards{
-      display:grid;
-      grid-template-columns:repeat(4,1fr);
-      gap:16px;
-      margin-bottom:20px;
-    }
+.table-wrap{
+  overflow-x:auto;
+}
 
-    .card{
-      background:#fff;
-      padding:16px;
-      border-radius:12px;
-      box-shadow:var(--shadow);
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-    }
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:900px;
+}
 
-    .card h2{
-      margin:0;
-      font-size:28px;
-      line-height:1;
-    }
+th, td{
+  padding:14px;
+  border-bottom:1px solid #eee;
+  text-align:left;
+  vertical-align:top;
+  white-space:nowrap;
+}
 
-    .card p{
-      margin:0;
-      font-size:13px;
-      color:var(--muted);
-    }
+button{
+  border:none;
+  background:#111827;
+  color:#fff;
+  padding:10px 14px;
+  border-radius:10px;
+  cursor:pointer;
+}
 
-    .filter{
-      background:#fff;
-      padding:16px;
-      border-radius:12px;
-      margin-bottom:20px;
-      box-shadow:var(--shadow);
-    }
+button:hover{
+  opacity:.9;
+}
 
-    .filter-row{
-      display:grid;
-      grid-template-columns:2fr 1fr 1fr 1fr auto;
-      gap:10px;
-      align-items:center;
-    }
+.hidden{
+  display:none !important;
+}
 
-    .filter input,
-    .filter select{
-      width:100%;
-      padding:10px 12px;
-      border-radius:8px;
-      border:1px solid #ddd;
-      background:#fff;
-      font-size:14px;
-      outline:none;
-    }
+.loading{
+  background:#fff;
+  border-radius:12px;
+  padding:16px;
+  margin-bottom:20px;
+}
 
-    .filter input:focus,
-    .filter select:focus{
-      border-color:#9ca3af;
-    }
+.empty{
+  background:#fff;
+  border-radius:12px;
+  padding:24px;
+  text-align:center;
+}
 
-    .table{
-      background:#fff;
-      border-radius:12px;
-      overflow:hidden;
-      box-shadow:var(--shadow);
-    }
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.4);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  z-index:1000;
+}
 
-    .table-wrap{
-      overflow-x:auto;
-    }
+.modal.hidden{
+  display:none;
+}
 
-    table{
-      width:100%;
-      border-collapse:collapse;
-      min-width:900px;
-    }
+.modal-card{
+  width:100%;
+  max-width:720px;
+  max-height:90vh;
+  overflow:auto;
+  background:#fff;
+  border-radius:18px;
+  box-shadow:0 20px 50px rgba(0,0,0,.18);
+}
 
-    th, td{
-      padding:14px;
-      border-bottom:1px solid #eee;
-      text-align:left;
-      font-size:14px;
-      vertical-align:middle;
-    }
+.modal-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:16px;
+  padding:20px;
+  border-bottom:1px solid #eee;
+}
 
-    thead tr{
-      background:#fafafa;
-    }
+.modal-name{
+  margin:0 0 8px 0;
+  font-size:24px;
+}
 
-    th{
-      font-size:12px;
-      color:var(--muted);
-      letter-spacing:.04em;
-      text-transform:uppercase;
-      white-space:nowrap;
-    }
+.modal-sub{
+  color:#6b7280;
+  font-size:14px;
+  margin-bottom:8px;
+}
 
-    tbody tr{
-      cursor:pointer;
-      transition:background .15s ease;
-    }
+.modal-body{
+  padding:20px;
+}
 
-    tbody tr:hover{
-      background:#fafcff;
-    }
+.modal-section{
+  margin-bottom:20px;
+}
 
-    .status{
-      display:inline-flex;
-      align-items:center;
-      padding:4px 10px;
-      border-radius:20px;
-      font-size:12px;
-      white-space:nowrap;
-      font-weight:600;
-    }
+.modal-section h3{
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:#6b7280;
+  margin:0 0 10px;
+}
 
-    .orange{background:var(--orange-bg);color:var(--orange-text);}
-    .green{background:var(--green-bg);color:var(--green-text);}
-    .blue{background:var(--blue-bg);color:var(--blue-text);}
-    .purple{background:var(--purple-bg);color:var(--purple-text);}
-    .yellow{background:var(--yellow-bg);color:var(--yellow-text);}
-    .slate{background:var(--slate-bg);color:var(--slate-text);}
-    .red{background:var(--red-bg);color:var(--red-text);}
+.info-grid{
+  display:grid;
+  grid-template-columns:160px 1fr;
+  gap:10px 16px;
+}
 
-    .muted{
-      color:var(--muted);
-    }
+.info-label{
+  color:#6b7280;
+}
 
-    .empty{
-      padding:36px 20px;
-      text-align:center;
-      color:var(--muted);
-      background:#fff;
-      border-radius:12px;
-      box-shadow:var(--shadow);
-    }
+.info-value{
+  word-break:break-word;
+  white-space:pre-wrap;
+}
 
-    .hidden{
-      display:none !important;
-    }
+.notes-box{
+  background:#f9fafb;
+  border:1px solid #eee;
+  border-radius:12px;
+  padding:14px;
+  white-space:pre-wrap;
+}
 
-    .modal{
-      position:fixed;
-      inset:0;
-      background:rgba(0,0,0,.4);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:20px;
-      z-index:999;
-    }
+@media (max-width: 1200px){
+  .filter-row{
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
 
-    .modal-card{
-      width:100%;
-      max-width:720px;
-      max-height:90vh;
-      overflow:auto;
-      background:#fff;
-      border-radius:18px;
-      box-shadow:0 20px 50px rgba(0,0,0,.18);
-    }
+@media (max-width: 900px){
+  .cards{
+    grid-template-columns: repeat(2,1fr);
+  }
 
-    .modal-header{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:16px;
-      padding:20px;
-      border-bottom:1px solid var(--border);
-    }
+  .filter-row{
+    grid-template-columns: 1fr 1fr;
+  }
+}
 
-    .modal-title-wrap{
-      display:flex;
-      gap:14px;
-      align-items:flex-start;
-      min-width:0;
-    }
+@media (max-width: 640px){
+  .cards{
+    grid-template-columns: 1fr 1fr;
+  }
 
-    .avatar{
-      width:48px;
-      height:48px;
-      border-radius:14px;
-      background:#eef2ff;
-      color:#3730a3;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-weight:700;
-      font-size:18px;
-      flex:0 0 auto;
-    }
+  .filter-row{
+    grid-template-columns: 1fr;
+  }
 
-    .modal-title{
-      margin:0;
-      font-size:22px;
-    }
-
-    .modal-sub{
-      color:var(--muted);
-      font-size:14px;
-      margin-top:4px;
-    }
-
-    .modal-body{
-      padding:20px;
-      display:grid;
-      gap:20px;
-    }
-
-    .section-title{
-      font-size:12px;
-      text-transform:uppercase;
-      letter-spacing:.08em;
-      color:var(--muted);
-      margin:0 0 10px;
-      font-weight:700;
-    }
-
-    .info-list{
-      border:1px solid var(--border);
-      border-radius:12px;
-      overflow:hidden;
-    }
-
-    .info-row{
-      display:grid;
-      grid-template-columns:160px 1fr;
-      gap:16px;
-      padding:12px 14px;
-      border-bottom:1px solid var(--border);
-    }
-
-    .info-row:last-child{
-      border-bottom:none;
-    }
-
-    .info-label{
-      color:var(--muted);
-      font-size:13px;
-    }
-
-    .info-value{
-      font-size:14px;
-      word-break:break-word;
-    }
-
-    .modal-close{
-      background:#fff;
-      color:#111827;
-      border:1px solid var(--border);
-      box-shadow:none;
-      padding:8px 12px;
-    }
-
-    .notes-box{
-      background:#f9fafb;
-      border:1px solid var(--border);
-      border-radius:12px;
-      padding:14px;
-      white-space:pre-wrap;
-      line-height:1.7;
-      font-size:14px;
-    }
-
-    .top-note{
-      margin-bottom:14px;
-      font-size:13px;
-      color:var(--muted);
-    }
-
-    .file-input{
-      display:none;
-    }
-
-    @media (max-width: 980px){
-      .cards{
-        grid-template-columns:repeat(2,1fr);
-      }
-
-      .filter-row{
-        grid-template-columns:1fr 1fr;
-      }
-
-      .filter-row .search-col{
-        grid-column:1 / -1;
-      }
-    }
-
-    @media (max-width: 640px){
-      body{
-        padding:14px;
-      }
-
-      .cards{
-        grid-template-columns:1fr 1fr;
-        gap:12px;
-      }
-
-      .card h2{
-        font-size:24px;
-      }
-
-      .filter-row{
-        grid-template-columns:1fr;
-      }
-
-      .header{
-        align-items:flex-start;
-      }
-
-      .modal{
-        padding:10px;
-      }
-
-      .modal-header,
-      .modal-body{
-        padding:16px;
-      }
-
-      .info-row{
-        grid-template-columns:1fr;
-        gap:6px;
-      }
-    }
-  </style>
+  .info-grid{
+    grid-template-columns:1fr;
+  }
+}
+</style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>顧客管理</h1>
-      <div class="header-actions">
-        <label class="button-label secondary-btn" for="csvFile">CSVを読み込む</label>
-        <input id="csvFile" class="file-input" type="file" accept=".csv" />
-        <button id="sheetButton">スプレッドシートを開く</button>
-      </div>
-    </div>
+<div class="container">
 
-    <div class="cards">
-      <div class="card">
-        <h2 id="statTotal">0</h2>
-        <p>総顧客数</p>
-      </div>
-      <div class="card">
-        <h2 id="statWorking">0</h2>
-        <p>対応中</p>
-      </div>
-      <div class="card">
-        <h2 id="statDone">0</h2>
-        <p>完了</p>
-      </div>
-      <div class="card">
-        <h2 id="statContracted">0</h2>
-        <p>契約済</p>
-      </div>
-    </div>
+  <div class="header">
+    <h1>顧客管理</h1>
+    <button id="openSheetButton">スプレッドシートを開く</button>
+  </div>
 
-    <div class="filter">
-      <div class="top-note">検索・絞り込み・行クリックで詳細確認ができます</div>
-      <div class="filter-row">
-        <div class="search-col">
-          <input id="searchInput" placeholder="お客様名・住所で検索" />
-        </div>
+  <div class="cards">
+    <div class="card"><h2 id="total">0</h2>総件数</div>
+    <div class="card"><h2 id="working">0</h2>対応中</div>
+    <div class="card"><h2 id="done">0</h2>完了</div>
+    <div class="card"><h2 id="contract">0</h2>契約済</div>
+  </div>
 
-        <select id="statusFilter">
-          <option value="all">すべてのステータス</option>
-        </select>
+  <div class="filter">
+    <div class="filter-row">
+      <select id="sheetSelect">
+        <option value="customer">顧客一覧</option>
+        <option value="diagnosis">診断管理</option>
+        <option value="insurance">保険管理</option>
+        <option value="construction">施工予定管理</option>
+      </select>
 
-        <select id="caseTypeFilter">
-          <option value="all">すべての案件</option>
-        </select>
+      <input id="searchInput" placeholder="お客様名・住所で検索">
 
-        <select id="agencyFilter">
-          <option value="all">すべての代理店</option>
-        </select>
+      <select id="filterCaseType">
+        <option value="all">すべての対応案件</option>
+      </select>
 
-        <button id="resetButton" class="secondary-btn">リセット</button>
-      </div>
-    </div>
+      <select id="filterStaff">
+        <option value="all">すべての担当者名</option>
+      </select>
 
-    <div id="emptyState" class="empty hidden">該当するお客様が見つかりません</div>
+      <select id="filterAgency">
+        <option value="all">すべての代理店</option>
+      </select>
 
-    <div class="table" id="tableContainer">
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>NO</th>
-              <th>お客様名</th>
-              <th>物件名</th>
-              <th>ステータス</th>
-              <th>対応案件</th>
-              <th>担当者</th>
-              <th>保険会社</th>
-            </tr>
-          </thead>
-          <tbody id="customerTableBody"></tbody>
-        </table>
-      </div>
+      <select id="filterInsuranceCompany">
+        <option value="all">すべての保険会社名</option>
+      </select>
     </div>
   </div>
 
-  <div id="detailModal" class="modal hidden">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-title-wrap">
-          <div class="avatar" id="modalAvatar">顧</div>
-          <div>
-            <h2 class="modal-title" id="modalName">-</h2>
-            <div class="modal-sub" id="modalProperty">-</div>
-            <div style="margin-top:8px;">
-              <span id="modalStatus"></span>
-            </div>
-          </div>
-        </div>
-        <button class="modal-close" id="closeModalButton">閉じる</button>
-      </div>
+  <div id="loadingBox" class="loading">データを読み込んでいます...</div>
+  <div id="emptyBox" class="empty hidden">データがありません</div>
 
-      <div class="modal-body">
-        <section>
-          <h3 class="section-title">基本情報</h3>
-          <div class="info-list" id="basicInfoList"></div>
-        </section>
-
-        <section id="moneySection" class="hidden">
-          <h3 class="section-title">金額情報</h3>
-          <div class="info-list" id="moneyInfoList"></div>
-        </section>
-
-        <section id="linkSection" class="hidden">
-          <h3 class="section-title">リンク</h3>
-          <div class="info-list" id="linkInfoList"></div>
-        </section>
-
-        <section id="notesSection" class="hidden">
-          <h3 class="section-title">備考</h3>
-          <div class="notes-box" id="modalNotes"></div>
-        </section>
-      </div>
+  <div id="tableBox" class="table hidden">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr id="tableHeadRow"></tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
     </div>
   </div>
 
-  <script>
-    const initialCustomers = [
-      {
-        no: 2,
-        customer_name: "大坪 博幸",
-        property_name: "自宅",
-        status: "3．書類作成中",
-        case_type: "診断",
-        person_in_charge: "-",
-        insurance_company: "東京海上",
-        agency: "A代理店",
-        phone: "090-1111-2222",
-        address: "東京都新宿区西新宿1-1-1",
-        decision_amount: "",
-        payment_deadline: "",
-        payment_received: "",
-        notes: "必要書類を案内済み。提出待ち。",
-        folder_url: ""
-      },
-      {
-        no: 5,
-        customer_name: "株式会社イースト",
-        property_name: "本社",
-        status: "6．入金済",
-        case_type: "診断",
-        person_in_charge: "-",
-        insurance_company: "東京海上",
-        agency: "B代理店",
-        phone: "03-2222-3333",
-        address: "東京都港区芝公園2-2-2",
-        decision_amount: "320,000円",
-        payment_deadline: "2026-03-31",
-        payment_received: "320,000円",
-        notes: "入金確認済み。完了処理のみ残り。",
-        folder_url: "https://example.com/folder/east"
-      },
-      {
-        no: 8,
-        customer_name: "テスト株式会社",
-        property_name: "本社",
-        status: "1．診断前",
-        case_type: "診断",
-        person_in_charge: "-",
-        insurance_company: "損保ジャパン",
-        agency: "A代理店",
-        phone: "03-9999-8888",
-        address: "神奈川県横浜市西区みなとみらい3-3-3",
-        decision_amount: "",
-        payment_deadline: "",
-        payment_received: "",
-        notes: "初回連絡前。",
-        folder_url: ""
-      },
-      {
-        no: 11,
-        customer_name: "山林 さちこ",
-        property_name: "はなれ",
-        status: "",
-        case_type: "診断",
-        person_in_charge: "-",
-        insurance_company: "-",
-        agency: "C代理店",
-        phone: "080-3333-4444",
-        address: "埼玉県川口市4-4-4",
-        decision_amount: "",
-        payment_deadline: "",
-        payment_received: "",
-        notes: "",
-        folder_url: ""
-      },
-      {
-        no: 14,
-        customer_name: "小林 えいじ",
-        property_name: "-",
-        status: "",
-        case_type: "診断",
-        person_in_charge: "-",
-        insurance_company: "-",
-        agency: "C代理店",
-        phone: "080-7777-1234",
-        address: "千葉県船橋市5-5-5",
-        decision_amount: "",
-        payment_deadline: "",
-        payment_received: "",
-        notes: "",
-        folder_url: ""
-      },
-      {
-        no: 16,
-        customer_name: "中田 一郎",
-        property_name: "別宅",
-        status: "4．申請済",
-        case_type: "申請",
-        person_in_charge: "田中",
-        insurance_company: "三井住友海上",
-        agency: "B代理店",
-        phone: "090-5555-6666",
-        address: "東京都世田谷区6-6-6",
-        decision_amount: "",
-        payment_deadline: "",
-        payment_received: "",
-        notes: "申請後、結果待ち。",
-        folder_url: ""
-      },
-      {
-        no: 17,
-        customer_name: "合同会社みらい",
-        property_name: "店舗",
-        status: "5．決定通知待",
-        case_type: "診断",
-        person_in_charge: "佐藤",
-        insurance_company: "あいおいニッセイ",
-        agency: "A代理店",
-        phone: "03-4545-7878",
-        address: "東京都台東区7-7-7",
-        decision_amount: "150,000円",
-        payment_deadline: "",
-        payment_received: "",
-        notes: "決定通知待ち。",
-        folder_url: ""
-      },
-      {
-        no: 18,
-        customer_name: "鈴木 花子",
-        property_name: "自宅",
-        status: "0．キャンセル",
-        case_type: "診断",
-        person_in_charge: "-",
-        insurance_company: "東京海上",
-        agency: "A代理店",
-        phone: "090-1212-5656",
-        address: "東京都杉並区8-8-8",
-        decision_amount: "",
-        payment_deadline: "",
-        payment_received: "",
-        notes: "お客様都合で中止。",
-        folder_url: ""
-      }
-    ];
+</div>
 
-    let customers = [...initialCustomers];
-    let filters = {
-      search: "",
-      status: "all",
-      caseType: "all",
-      agency: "all"
-    };
+<div id="detailModal" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div>
+        <h2 id="modalName" class="modal-name">-</h2>
+        <div id="modalSub" class="modal-sub">-</div>
+      </div>
+      <button id="closeModalButton">閉じる</button>
+    </div>
 
-    const customerTableBody = document.getElementById("customerTableBody");
-    const searchInput = document.getElementById("searchInput");
-    const statusFilter = document.getElementById("statusFilter");
-    const caseTypeFilter = document.getElementById("caseTypeFilter");
-    const agencyFilter = document.getElementById("agencyFilter");
-    const resetButton = document.getElementById("resetButton");
-    const emptyState = document.getElementById("emptyState");
-    const tableContainer = document.getElementById("tableContainer");
-    const csvFile = document.getElementById("csvFile");
-    const sheetButton = document.getElementById("sheetButton");
+    <div class="modal-body">
+      <div class="modal-section">
+        <h3>詳細情報</h3>
+        <div id="modalInfo" class="info-grid"></div>
+      </div>
 
-    const detailModal = document.getElementById("detailModal");
-    const closeModalButton = document.getElementById("closeModalButton");
-    const modalAvatar = document.getElementById("modalAvatar");
-    const modalName = document.getElementById("modalName");
-    const modalProperty = document.getElementById("modalProperty");
-    const modalStatus = document.getElementById("modalStatus");
-    const basicInfoList = document.getElementById("basicInfoList");
-    const moneySection = document.getElementById("moneySection");
-    const moneyInfoList = document.getElementById("moneyInfoList");
-    const linkSection = document.getElementById("linkSection");
-    const linkInfoList = document.getElementById("linkInfoList");
-    const notesSection = document.getElementById("notesSection");
-    const modalNotes = document.getElementById("modalNotes");
+      <div class="modal-section">
+        <h3>備考</h3>
+        <div id="modalNotes" class="notes-box">-</div>
+      </div>
+    </div>
+  </div>
+</div>
 
-    function escapeHtml(value) {
-      return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
+<script>
+const SPREADSHEET_ID = "1z_q03FJikHrKr-KhdQVvOVFU8qkUvm1dI35I4QtUzlo";
+const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit`;
 
-    function getStatusClass(status) {
-      const map = {
-        "0．キャンセル": "slate",
-        "1．診断前": "blue",
-        "2．証書待ち": "purple",
-        "3．書類作成中": "orange",
-        "4．申請済": "orange",
-        "5．決定通知待": "yellow",
-        "6．入金済": "green",
-        "7．代理店支払い済": "green"
-      };
-      return map[status] || "";
-    }
+const SHEET_CONFIG = {
+  customer: {
+    label: "顧客一覧",
+    sheetName: "顧客一覧",
+    filtersEnabled: true,
+    searchPlaceholder: "お客様名・住所で検索",
+    preferredColumns: ["NO", "お客様名", "物件名", "対応案件", "担当者名", "代理店", "保険会社名"],
+    filterFields: [
+      { id: "filterCaseType", key: "対応案件", defaultLabel: "すべての対応案件" },
+      { id: "filterStaff", key: "担当者名", defaultLabel: "すべての担当者名" },
+      { id: "filterAgency", key: "代理店", defaultLabel: "すべての代理店" },
+      { id: "filterInsuranceCompany", key: "保険会社名", defaultLabel: "すべての保険会社名" }
+    ],
+    modalTitleField: "お客様名",
+    modalSubField: "物件名",
+    notesField: "備考"
+  },
+  diagnosis: {
+    label: "診断管理",
+    sheetName: "診断管理",
+    filtersEnabled: false,
+    preferredColumns: null,
+    filterFields: [],
+    modalTitleField: null,
+    modalSubField: null,
+    notesField: "備考"
+  },
+  insurance: {
+    label: "保険管理",
+    sheetName: "保険管理",
+    filtersEnabled: false,
+    preferredColumns: null,
+    filterFields: [],
+    modalTitleField: null,
+    modalSubField: null,
+    notesField: "備考"
+  },
+  construction: {
+    label: "施工予定管理",
+    sheetName: "施工予定管理",
+    filtersEnabled: false,
+    preferredColumns: null,
+    filterFields: [],
+    modalTitleField: null,
+    modalSubField: null,
+    notesField: "備考"
+  }
+};
 
-    function statusBadge(status) {
-      if (!status) return "-";
-      return '<span class="status ' + getStatusClass(status) + '">' + escapeHtml(status) + '</span>';
-    }
+let currentSheetKey = "customer";
+let headers = [];
+let rawRows = [];
+let filteredRows = [];
 
-    function uniqueValues(key) {
-      return [...new Set(
-        customers
-          .map(item => (item[key] ?? "").toString().trim())
-          .filter(Boolean)
-          .filter(v => v !== "-")
-      )];
-    }
+const sheetSelect = document.getElementById("sheetSelect");
+const searchInput = document.getElementById("searchInput");
+const filterCaseType = document.getElementById("filterCaseType");
+const filterStaff = document.getElementById("filterStaff");
+const filterAgency = document.getElementById("filterAgency");
+const filterInsuranceCompany = document.getElementById("filterInsuranceCompany");
+const loadingBox = document.getElementById("loadingBox");
+const emptyBox = document.getElementById("emptyBox");
+const tableBox = document.getElementById("tableBox");
+const tableHeadRow = document.getElementById("tableHeadRow");
+const tbody = document.getElementById("tbody");
 
-    function fillSelect(selectElement, items, defaultLabel) {
-      const current = selectElement.value;
-      selectElement.innerHTML = "";
-      const defaultOption = document.createElement("option");
-      defaultOption.value = "all";
-      defaultOption.textContent = defaultLabel;
-      selectElement.appendChild(defaultOption);
+document.getElementById("openSheetButton").addEventListener("click", () => {
+  window.open(SHEET_URL, "_blank");
+});
 
-      items.forEach(item => {
-        const option = document.createElement("option");
-        option.value = item;
-        option.textContent = item;
-        selectElement.appendChild(option);
-      });
+sheetSelect.addEventListener("change", async (e) => {
+  currentSheetKey = e.target.value;
+  resetFilterValues();
+  updateFilterVisibility();
+  await loadSheetData();
+});
 
-      if ([...selectElement.options].some(opt => opt.value === current)) {
-        selectElement.value = current;
-      } else {
-        selectElement.value = "all";
-      }
-    }
+searchInput.addEventListener("input", applyFilters);
+filterCaseType.addEventListener("change", applyFilters);
+filterStaff.addEventListener("change", applyFilters);
+filterAgency.addEventListener("change", applyFilters);
+filterInsuranceCompany.addEventListener("change", applyFilters);
 
-    function setupFilters() {
-      fillSelect(statusFilter, uniqueValues("status"), "すべてのステータス");
-      fillSelect(caseTypeFilter, uniqueValues("case_type"), "すべての案件");
-      fillSelect(agencyFilter, uniqueValues("agency"), "すべての代理店");
-    }
+document.getElementById("closeModalButton").addEventListener("click", () => {
+  document.getElementById("detailModal").classList.add("hidden");
+});
 
-    function getFilteredCustomers() {
-      return customers.filter(customer => {
-        const searchText = (
-          (customer.customer_name || "") + " " +
-          (customer.address || "") + " " +
-          (customer.property_name || "")
-        ).toLowerCase();
+document.getElementById("detailModal").addEventListener("click", (e) => {
+  if (e.target.id === "detailModal") {
+    document.getElementById("detailModal").classList.add("hidden");
+  }
+});
 
-        const matchesSearch = !filters.search || searchText.includes(filters.search.toLowerCase());
-        const matchesStatus = filters.status === "all" || (customer.status || "") === filters.status;
-        const matchesCaseType = filters.caseType === "all" || (customer.case_type || "") === filters.caseType;
-        const matchesAgency = filters.agency === "all" || (customer.agency || "") === filters.agency;
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    document.getElementById("detailModal").classList.add("hidden");
+  }
+});
 
-        return matchesSearch && matchesStatus && matchesCaseType && matchesAgency;
-      });
-    }
+function normalizeText(value) {
+  return String(value ?? "")
+    .replace(/\u00A0/g, " ")
+    .replace(/\r/g, "")
+    .replace(/\n/g, "")
+    .replace(/\s+/g, "")
+    .trim();
+}
 
-    function updateStats(filteredCustomers) {
-      const total = filteredCustomers.length;
-      const working = filteredCustomers.filter(c =>
-        ["1．診断前", "2．証書待ち", "3．書類作成中", "4．申請済", "5．決定通知待"].includes(c.status)
-      ).length;
-      const done = filteredCustomers.filter(c =>
-        ["6．入金済", "7．代理店支払い済"].includes(c.status)
-      ).length;
-      const contracted = filteredCustomers.filter(c =>
-        (c.status || "").includes("契約") || c.contracted === "✔"
-      ).length;
+function stripHtml(value) {
+  return String(value ?? "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]*>/g, "")
+    .trim();
+}
 
-      document.getElementById("statTotal").textContent = total;
-      document.getElementById("statWorking").textContent = working;
-      document.getElementById("statDone").textContent = done;
-      document.getElementById("statContracted").textContent = contracted;
-    }
+function parseGvizResponse(text) {
+  const match = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);?$/);
+  if (!match) {
+    throw new Error("GVizレスポンスを解析できませんでした");
+  }
+  return JSON.parse(match[1]);
+}
 
-    function renderTable() {
-      const filtered = getFilteredCustomers();
-      customerTableBody.innerHTML = "";
+function rowCellToString(cell) {
+  if (!cell) return "";
+  if (cell.f != null && cell.f !== "") return stripHtml(cell.f);
+  if (cell.v == null) return "";
+  return String(cell.v).trim();
+}
 
-      if (!filtered.length) {
-        emptyState.classList.remove("hidden");
-        tableContainer.classList.add("hidden");
-      } else {
-        emptyState.classList.add("hidden");
-        tableContainer.classList.remove("hidden");
-      }
+function aliasHeader(header) {
+  const h = normalizeText(header);
 
-      filtered.forEach(customer => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${escapeHtml(customer.no ?? "-")}</td>
-          <td>${escapeHtml(customer.customer_name || "-")}</td>
-          <td>${escapeHtml(customer.property_name || "-")}</td>
-          <td>${statusBadge(customer.status)}</td>
-          <td>${escapeHtml(customer.case_type || "-")}</td>
-          <td>${escapeHtml(customer.person_in_charge || "-")}</td>
-          <td>${escapeHtml(customer.insurance_company || "-")}</td>
-        `;
-        tr.addEventListener("click", () => openModal(customer));
-        customerTableBody.appendChild(tr);
-      });
+  const map = {
+    "no": "NO",
+    "ＮＯ": "NO",
+    "お客様名": "お客様名",
+    "物件名": "物件名",
+    "対応案件": "対応案件",
+    "備考": "備考",
+    "フォルダurl": "フォルダURL",
+    "フォルダURL": "フォルダURL",
+    "保険契約者": "保険契約者",
+    "担当者名": "担当者名",
+    "代理店": "代理店",
+    "担当者電話番号": "担当者電話番号",
+    "住所": "住所",
+    "担当者アドレス": "担当者アドレス",
+    "保険会社名": "保険会社名",
+    "保険証券情報": "保険証券情報"
+  };
 
-      updateStats(filtered);
-    }
+  return map[h] || String(header || "").trim();
+}
 
-    function infoRow(label, value) {
-      if (value === null || value === undefined || value === "" || value === "-" || value === "—") return "";
-      return `
-        <div class="info-row">
-          <div class="info-label">${escapeHtml(label)}</div>
-          <div class="info-value">${escapeHtml(value)}</div>
-        </div>
-      `;
-    }
+function findHeaderRowIndex(matrix) {
+  for (let i = 0; i < matrix.length; i++) {
+    const row = matrix[i];
+    const normalized = row.map(aliasHeader);
+    const hit = normalized.filter(v => ["NO", "お客様名", "物件名", "対応案件"].includes(v)).length;
+    if (hit >= 3) return i;
+  }
 
-    function linkRow(label, value) {
-      if (!value) return "";
-      const safeUrl = escapeHtml(value);
-      return `
-        <div class="info-row">
-          <div class="info-label">${escapeHtml(label)}</div>
-          <div class="info-value">
-            <a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeUrl}</a>
-          </div>
-        </div>
-      `;
-    }
+  for (let i = 0; i < matrix.length; i++) {
+    const filled = matrix[i].filter(v => String(v).trim() !== "").length;
+    if (filled >= 3) return i;
+  }
 
-    function openModal(customer) {
-      modalAvatar.textContent = (customer.customer_name || "顧").charAt(0);
-      modalName.textContent = customer.customer_name || "-";
-      modalProperty.textContent = customer.property_name || "-";
-      modalStatus.innerHTML = statusBadge(customer.status);
+  return 0;
+}
 
-      basicInfoList.innerHTML = [
-        infoRow("対応案件", customer.case_type),
-        infoRow("保険会社", customer.insurance_company),
-        infoRow("担当者", customer.person_in_charge),
-        infoRow("代理店", customer.agency),
-        infoRow("電話番号", customer.phone),
-        infoRow("住所", customer.address),
-        infoRow("物件名", customer.property_name)
-      ].join("");
+function convertGvizToObjects(json) {
+  const colsCount = json.table.cols.length;
 
-      const moneyHtml = [
-        infoRow("決定通知額", customer.decision_amount),
-        infoRow("支払い期限", customer.payment_deadline),
-        infoRow("入金額", customer.payment_received)
-      ].join("");
-
-      moneyInfoList.innerHTML = moneyHtml;
-      moneySection.classList.toggle("hidden", !moneyHtml);
-
-      const linkHtml = linkRow("フォルダURL", customer.folder_url);
-      linkInfoList.innerHTML = linkHtml;
-      linkSection.classList.toggle("hidden", !linkHtml);
-
-      const notes = (customer.notes || "").trim();
-      modalNotes.textContent = notes;
-      notesSection.classList.toggle("hidden", !notes);
-
-      detailModal.classList.remove("hidden");
-    }
-
-    function closeModal() {
-      detailModal.classList.add("hidden");
-    }
-
-    function resetFilters() {
-      filters = {
-        search: "",
-        status: "all",
-        caseType: "all",
-        agency: "all"
-      };
-
-      searchInput.value = "";
-      statusFilter.value = "all";
-      caseTypeFilter.value = "all";
-      agencyFilter.value = "all";
-      renderTable();
-    }
-
-    function parseCSVLine(line) {
-      const result = [];
-      let current = "";
-      let inQuotes = false;
-
-      for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        const next = line[i + 1];
-
-        if (char === '"' && inQuotes && next === '"') {
-          current += '"';
-          i++;
-        } else if (char === '"') {
-          inQuotes = !inQuotes;
-        } else if (char === "," && !inQuotes) {
-          result.push(current);
-          current = "";
-        } else {
-          current += char;
-        }
-      }
-      result.push(current);
-      return result.map(v => v.trim());
-    }
-
-    function parseCSV(text) {
-      const lines = text
-        .replace(/\r\n/g, "\n")
-        .replace(/\r/g, "\n")
-        .split("\n")
-        .filter(line => line.trim() !== "");
-
-      if (lines.length < 2) return [];
-
-      const headers = parseCSVLine(lines[0]).map(h => h.trim());
-      return lines.slice(1).map(line => {
-        const values = parseCSVLine(line);
-        const row = {};
-        headers.forEach((header, index) => {
-          row[header] = values[index] ?? "";
-        });
-        return row;
-      });
-    }
-
-    function normalizeImportedRow(row, index) {
-      return {
-        no: row.no || row.NO || row.No || row["番号"] || row["no"] || (customers.length + index + 1),
-        customer_name: row.customer_name || row["customer_name"] || row["お客様名"] || row["顧客名"] || "",
-        property_name: row.property_name || row["物件名"] || "",
-        status: row.status || row["ステータス"] || "",
-        case_type: row.case_type || row["対応案件"] || "",
-        person_in_charge: row.person_in_charge || row["担当者"] || "-",
-        insurance_company: row.insurance_company || row["保険会社"] || "-",
-        agency: row.agency || row["代理店"] || "",
-        phone: row.phone || row["電話番号"] || "",
-        address: row.address || row["住所"] || "",
-        decision_amount: row.decision_amount || row["決定通知額"] || "",
-        payment_deadline: row.payment_deadline || row["支払い期限"] || "",
-        payment_received: row.payment_received || row["入金額"] || "",
-        notes: row.notes || row["備考"] || "",
-        folder_url: row.folder_url || row["フォルダURL"] || ""
-      };
-    }
-
-    searchInput.addEventListener("input", (e) => {
-      filters.search = e.target.value;
-      renderTable();
+  const matrix = json.table.rows.map(r => {
+    const arr = new Array(colsCount).fill("");
+    (r.c || []).forEach((cell, i) => {
+      arr[i] = rowCellToString(cell);
     });
+    return arr;
+  });
 
-    statusFilter.addEventListener("change", (e) => {
-      filters.status = e.target.value;
-      renderTable();
+  const headerRowIndex = findHeaderRowIndex(matrix);
+  const headerRow = matrix[headerRowIndex].map(aliasHeader);
+
+  const safeHeaders = headerRow.map((h, i) => h || `COL_${i + 1}`);
+
+  const rows = matrix.slice(headerRowIndex + 1).map(row => {
+    const obj = {};
+    safeHeaders.forEach((h, i) => {
+      obj[h] = String(row[i] || "").trim();
     });
+    return obj;
+  }).filter(obj => Object.values(obj).some(v => String(v).trim() !== ""));
 
-    caseTypeFilter.addEventListener("change", (e) => {
-      filters.caseType = e.target.value;
-      renderTable();
-    });
+  return {
+    headers: safeHeaders,
+    rows
+  };
+}
 
-    agencyFilter.addEventListener("change", (e) => {
-      filters.agency = e.target.value;
-      renderTable();
-    });
+async function fetchSheetByName(sheetName) {
+  const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=${encodeURIComponent(sheetName)}&tqx=out:json`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("シート取得に失敗しました");
+  const text = await res.text();
+  return convertGvizToObjects(parseGvizResponse(text));
+}
 
-    resetButton.addEventListener("click", resetFilters);
+function resetFilterValues() {
+  searchInput.value = "";
+  filterCaseType.value = "all";
+  filterStaff.value = "all";
+  filterAgency.value = "all";
+  filterInsuranceCompany.value = "all";
+}
 
-    csvFile.addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+function updateFilterVisibility() {
+  const config = SHEET_CONFIG[currentSheetKey];
+  const enabled = config.filtersEnabled;
 
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        try {
-          const text = event.target.result;
-          const rows = parseCSV(text);
-          const imported = rows
-            .map(normalizeImportedRow)
-            .filter(row => row.customer_name);
+  searchInput.classList.toggle("hidden", !enabled);
+  filterCaseType.classList.toggle("hidden", !enabled);
+  filterStaff.classList.toggle("hidden", !enabled);
+  filterAgency.classList.toggle("hidden", !enabled);
+  filterInsuranceCompany.classList.toggle("hidden", !enabled);
 
-          if (!imported.length) {
-            alert("読み込める顧客データが見つかりませんでした。");
-            return;
-          }
+  if (enabled) {
+    searchInput.placeholder = config.searchPlaceholder || "検索";
+  }
+}
 
-          customers = imported;
-          setupFilters();
-          resetFilters();
-          alert(imported.length + "件の顧客データを読み込みました。");
-        } catch (error) {
-          console.error(error);
-          alert("CSVの読み込みに失敗しました。");
-        } finally {
-          csvFile.value = "";
-        }
-      };
-      reader.readAsText(file, "UTF-8");
-    });
+function uniqueValues(rows, key) {
+  return [...new Set(
+    rows
+      .map(r => String(r[key] || "").trim())
+      .filter(Boolean)
+      .filter(v => v !== "-")
+  )];
+}
 
-    sheetButton.addEventListener("click", () => {
-      alert("ここにスプレッドシートURLを設定してください。");
-    });
+function fillSelect(selectId, values, defaultLabel) {
+  const select = document.getElementById(selectId);
+  const current = select.value;
 
-    closeModalButton.addEventListener("click", closeModal);
+  select.innerHTML = "";
+  const first = document.createElement("option");
+  first.value = "all";
+  first.textContent = defaultLabel;
+  select.appendChild(first);
 
-    detailModal.addEventListener("click", (e) => {
-      if (e.target === detailModal) closeModal();
-    });
+  values.forEach(v => {
+    const option = document.createElement("option");
+    option.value = v;
+    option.textContent = v;
+    select.appendChild(option);
+  });
 
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeModal();
-    });
+  if ([...select.options].some(o => o.value === current)) {
+    select.value = current;
+  } else {
+    select.value = "all";
+  }
+}
 
-    setupFilters();
+function updateCustomerFilters() {
+  const config = SHEET_CONFIG.customer;
+  config.filterFields.forEach(item => {
+    fillSelect(item.id, uniqueValues(rawRows, item.key), item.defaultLabel);
+  });
+}
+
+function getDisplayColumns() {
+  const config = SHEET_CONFIG[currentSheetKey];
+
+  if (!headers.length) return [];
+
+  if (!config.preferredColumns || !config.preferredColumns.length) {
+    return headers;
+  }
+
+  const matched = config.preferredColumns.filter(col => headers.includes(col));
+
+  return matched.length ? matched : headers;
+}
+
+function applyFilters() {
+  const config = SHEET_CONFIG[currentSheetKey];
+
+  if (!config.filtersEnabled) {
+    filteredRows = [...rawRows];
+    renderStats();
     renderTable();
-  </script>
+    return;
+  }
+
+  const keyword = searchInput.value.trim().toLowerCase();
+  const caseType = filterCaseType.value;
+  const staff = filterStaff.value;
+  const agency = filterAgency.value;
+  const insuranceCompany = filterInsuranceCompany.value;
+
+  filteredRows = rawRows.filter(row => {
+    const searchTarget = [
+      row["お客様名"] || "",
+      row["住所"] || "",
+      row["物件名"] || ""
+    ].join(" ").toLowerCase();
+
+    return (!keyword || searchTarget.includes(keyword))
+      && (caseType === "all" || (row["対応案件"] || "") === caseType)
+      && (staff === "all" || (row["担当者名"] || "") === staff)
+      && (agency === "all" || (row["代理店"] || "") === agency)
+      && (insuranceCompany === "all" || (row["保険会社名"] || "") === insuranceCompany);
+  });
+
+  renderStats();
+  renderTable();
+}
+
+function renderStats() {
+  const config = SHEET_CONFIG[currentSheetKey];
+  const total = filteredRows.length;
+
+  document.getElementById("total").textContent = total;
+
+  if (config.filtersEnabled) {
+    const working = filteredRows.filter(r => String(r["対応案件"] || "").trim() !== "").length;
+    const done = filteredRows.filter(r => String(r["保険証券情報"] || "").includes("受け取り済")).length;
+    const contract = filteredRows.filter(r => {
+      const v = String(r["保険契約者"] || "").trim();
+      return v !== "" && v !== "-" && v !== "お客名と同じ" && v !== "お客名と同じ場合はハイフン";
+    }).length;
+
+    document.getElementById("working").textContent = working;
+    document.getElementById("done").textContent = done;
+    document.getElementById("contract").textContent = contract;
+  } else {
+    document.getElementById("working").textContent = 0;
+    document.getElementById("done").textContent = 0;
+    document.getElementById("contract").textContent = 0;
+  }
+}
+
+function renderTable() {
+  const displayColumns = getDisplayColumns();
+
+  tableHeadRow.innerHTML = "";
+  tbody.innerHTML = "";
+
+  if (!displayColumns.length || !filteredRows.length) {
+    emptyBox.classList.remove("hidden");
+    tableBox.classList.add("hidden");
+    return;
+  }
+
+  displayColumns.forEach(h => {
+    const th = document.createElement("th");
+    th.textContent = h;
+    tableHeadRow.appendChild(th);
+  });
+
+  filteredRows.forEach(row => {
+    const tr = document.createElement("tr");
+
+    displayColumns.forEach(h => {
+      const td = document.createElement("td");
+      td.textContent = row[h] || "";
+      tr.appendChild(td);
+    });
+
+    tr.addEventListener("click", () => openModal(row));
+    tbody.appendChild(tr);
+  });
+
+  emptyBox.classList.add("hidden");
+  tableBox.classList.remove("hidden");
+}
+
+function openModal(row) {
+  const config = SHEET_CONFIG[currentSheetKey];
+  const titleField = config.modalTitleField && row[config.modalTitleField] ? config.modalTitleField : headers[0];
+  const subField = config.modalSubField && row[config.modalSubField] ? config.modalSubField : "";
+
+  document.getElementById("modalName").textContent = row[titleField] || "-";
+  document.getElementById("modalSub").textContent = subField ? (row[subField] || "-") : config.label;
+
+  const modalInfo = document.getElementById("modalInfo");
+  modalInfo.innerHTML = "";
+
+  headers.forEach(h => {
+    const label = document.createElement("div");
+    label.className = "info-label";
+    label.textContent = h;
+
+    const value = document.createElement("div");
+    value.className = "info-value";
+    value.textContent = row[h] || "-";
+
+    modalInfo.appendChild(label);
+    modalInfo.appendChild(value);
+  });
+
+  const notesField = config.notesField || "備考";
+  document.getElementById("modalNotes").textContent = row[notesField] || "-";
+  document.getElementById("detailModal").classList.remove("hidden");
+}
+
+async function loadSheetData() {
+  loadingBox.classList.remove("hidden");
+  emptyBox.classList.add("hidden");
+  tableBox.classList.add("hidden");
+
+  try {
+    const config = SHEET_CONFIG[currentSheetKey];
+    const result = await fetchSheetByName(config.sheetName);
+
+    headers = result.headers;
+    rawRows = result.rows;
+
+    if (config.filtersEnabled) {
+      updateCustomerFilters();
+    }
+
+    applyFilters();
+  } catch (error) {
+    console.error(error);
+    headers = [];
+    rawRows = [];
+    filteredRows = [];
+    tableHeadRow.innerHTML = "";
+    tbody.innerHTML = "";
+    emptyBox.classList.remove("hidden");
+    tableBox.classList.add("hidden");
+  } finally {
+    loadingBox.classList.add("hidden");
+  }
+}
+
+updateFilterVisibility();
+loadSheetData();
+</script>
 </body>
 </html>
